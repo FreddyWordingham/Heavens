@@ -1,5 +1,7 @@
 use clap::Parser;
 
+use constellation::Galaxy;
+
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Args {
@@ -11,5 +13,6 @@ fn main() {
     println!("Hello, Galaxy!");
 
     let args = Args::parse();
-    println!("Number of stars: {}", args.n);
+
+    let _galaxy = Galaxy::new(args.n);
 }
