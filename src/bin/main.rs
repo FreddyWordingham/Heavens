@@ -7,6 +7,9 @@ use constellation::Galaxy;
 struct Args {
     #[arg(short, long, default_value = "1000")]
     n: usize,
+
+    #[arg(short, long, default_value = "1.0e6")]
+    radius: f64,
 }
 
 fn main() {
@@ -14,5 +17,5 @@ fn main() {
 
     let args = Args::parse();
 
-    let _galaxy = Galaxy::new(args.n);
+    let _galaxy = Galaxy::new(args.n, args.radius);
 }
