@@ -20,3 +20,5 @@ Compile the code:
 ```shell
 cargo build --release -- -n 1000 -radius 1e6
 ```
+
+![Terminal simulation](./images/screenshot.png)
