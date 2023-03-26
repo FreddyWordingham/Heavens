@@ -10,6 +10,9 @@ struct Args {
 
     #[arg(short, long, default_value = "1.0e6")]
     radius: f64,
+
+    #[arg(short, long, default_value = "512")]
+    res: usize,
 }
 
 fn main() {
@@ -17,5 +20,6 @@ fn main() {
 
     let args = Args::parse();
 
-    let _galaxy = Galaxy::new(args.num_stars, args.radius);
+    let galaxy = Galaxy::new(args.num_stars, args.radius);
+    let _image = galaxy.raster(args.res);
 }
