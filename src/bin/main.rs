@@ -21,5 +21,5 @@ fn main() {
     let args = Args::parse();
 
     let galaxy = Galaxy::new(args.num_stars, args.radius);
-    let _image = galaxy.raster(args.res);
+    let _count = galaxy.count(args.res);
 }

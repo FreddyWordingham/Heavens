@@ -39,20 +39,22 @@ impl Galaxy {
         Self { radius, stars }
     }
 
-    /// Raster the stars on to a 2D grid.
+    /// Count the number stars on to a square 2D grid with a given resolution.
     #[inline]
     #[must_use]
-    pub fn raster(&self, res: usize) -> Array2<u8> {
-        debug_assert!(res > 0);
+    pub fn count(&self, res: usize) -> Array2<u8> {
+        debug_assert!(res > 1);
+
+        let delta = 2.0 * self.radius / res as f64;
+        let inv_delta = 1.0 / delta;
 
         let mut grid = Array2::zeros((res, res));
+        for star in &self.stars {
+            let xi = ((star.pos.x + self.radius) * inv_delta) as usize;
+            let yi = ((star.pos.y + self.radius) * inv_delta) as usize;
 
-        for _star in &self.stars {
-            let x = 0;
-            let y = 0;
-
-            if (x > 0) && (x < res) && (y > 0) && (y < res) {
-                grid[[x, y]] = 1;
+            if (xi > 0) && (xi < res) && (yi > 0) && (yi < res) {
+                grid[[xi, yi]] += 1;
             }
         }
 
