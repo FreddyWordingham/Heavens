@@ -18,8 +18,11 @@ struct Args {
     #[arg(short, long, default_value = "512")]
     res: usize,
 
-    #[arg(short, long, default_value = "1.0")]
+    #[arg(short, long)]
     grav_strength: f64,
+
+    #[arg(short, long)]
+    smoothing_length: f64,
 }
 
 fn main() {
@@ -27,10 +30,17 @@ fn main() {
 
     let args = Args::parse();
 
-    let mut galaxy = Galaxy::new(args.num_stars, args.radius, args.grav_strength);
+    let mut galaxy = Galaxy::new(
+        args.num_stars,
+        args.radius,
+        args.grav_strength,
+        args.smoothing_length,
+    );
 
     loop {
-        galaxy.evolve(1.0 * YEAR);
+        for _ in 0..100 {
+            galaxy.evolve(0.01 * YEAR);
+        }
 
         let count = galaxy.count(args.res);
         display(&count);

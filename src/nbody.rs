@@ -6,7 +6,7 @@ use ocl::ProQue;
 use crate::Particle;
 
 /// Update the massive particle positions and velocities.
-pub fn nbody(particles: &mut [Particle], grav_strength: f64, dt: f64) {
+pub fn nbody(particles: &mut [Particle], grav_strength: f64, smoothing_length: f64, dt: f64) {
     debug_assert!(grav_strength > 0.0);
     debug_assert!(dt > 0.0);
 
@@ -40,7 +40,7 @@ pub fn nbody(particles: &mut [Particle], grav_strength: f64, dt: f64) {
         }}
         ",
         num_particles = num_particles,
-        grav_strength = grav_strength,
+        grav_strength = grav_strength as f32,
     );
 
     let pro_que = ProQue::builder()
