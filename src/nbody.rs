@@ -5,7 +5,7 @@ use ocl::ProQue;
 
 use crate::Particle;
 
-/// Calculate the force between all particles.
+/// Update the massive particle positions and velocities.
 pub fn nbody(particles: &mut [Particle], grav_strength: f64, dt: f64) {
     debug_assert!(grav_strength > 0.0);
     debug_assert!(dt > 0.0);

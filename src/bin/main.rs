@@ -30,7 +30,7 @@ fn main() {
     let mut galaxy = Galaxy::new(args.num_stars, args.radius, args.grav_strength);
 
     loop {
-        galaxy.evolve(0.1 * YEAR);
+        galaxy.evolve(1.0 * YEAR);
 
         let count = galaxy.count(args.res);
         display(&count);
