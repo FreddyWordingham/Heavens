@@ -6,7 +6,9 @@
 
 N-body simulation.
 
-![Rendered simulation](./images/galaxy.gif)
+<div align="center">
+    <img src="./images/galaxy.gif" alt="Galaxy simulation" width="100%">
+</div>
 
 ## Quickstart
 
