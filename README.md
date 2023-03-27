@@ -6,6 +6,8 @@
 
 N-body simulation.
 
+![Rendered simulation](./images/galaxy.gif)
+
 ## Quickstart
 
 Clone the repository and change into the directory:
