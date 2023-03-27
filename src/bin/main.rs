@@ -2,7 +2,7 @@ use clap::Parser;
 use ndarray::Array2;
 use std::{thread::sleep, time};
 
-use constellation::Galaxy;
+use heavens::Galaxy;
 
 const YEAR: f64 = 365.25 * 24.0 * 60.0 * 60.0;
 
