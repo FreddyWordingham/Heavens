@@ -18,7 +18,7 @@ cd Constellation
 Compile the code:
 
 ```shell
-cargo run --release -- --radius 1e6 --res 64 --grav-strength 1.0e2 --smoothing-length 1e3 --num-stars 1000
+cargo run --release -- --radius 1e6 --res 512 --grav-strength 1.0e2 --smoothing-length 1e3 --num-stars 40000 --cmap 000000 000022 000077 AA00AA AA0000 FFFF00 FFFFFF
 ```
 
 ![Terminal simulation](./images/screenshot.png)

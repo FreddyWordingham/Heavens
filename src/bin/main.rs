@@ -23,6 +23,9 @@ struct Args {
 
     #[arg(short, long)]
     smoothing_length: f64,
+
+    #[clap(short, long, value_parser, num_args = 2.., value_delimiter = ' ')]
+    cmap: Vec<String>,
 }
 
 fn main() {
@@ -35,23 +38,24 @@ fn main() {
         args.radius,
         args.grav_strength,
         args.smoothing_length,
+        &args.cmap,
     );
 
     let mut step = 0;
     loop {
-        for _ in 0..100 {
-            galaxy.evolve(0.01 * YEAR);
-        }
-
         let count = galaxy.count(args.res);
-        let image = render::image(count, 10);
+        let image = render::image(count, 4, &galaxy.cmap);
         let png = render::encode(&image);
-        png.save(&format!("output/{0:>3}.png", step))
+        png.save(&format!("output/{:06}.png", step))
             .expect("Failed to save image.");
         // display(&count);
         // sleep(time::Duration::from_millis(10));
 
         step += 1;
+
+        for _ in 0..10 {
+            galaxy.evolve(0.01 * YEAR);
+        }
     }
 }
 
