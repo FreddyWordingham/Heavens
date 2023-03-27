@@ -6,10 +6,6 @@
 
 N-body simulation.
 
-<div align="center">
-    <img src="./images/galaxy.gif" alt="Galaxy simulation" width="100%">
-</div>
-
 ## Quickstart
 
 Clone the repository and change into the directory:
@@ -24,5 +20,13 @@ Compile the code:
 ```shell
 cargo run --release -- --radius 1e6 --res 512 --grav-strength 1.0e2 --smoothing-length 1e3 --num-stars 40000 --cmap 000000 000022 000077 AA00AA AA0000 FFFF00 FFFFFF
 ```
+
+Render the simulation as an image:
+
+<div align="center">
+    <img src="./images/galaxy.gif" alt="Galaxy simulation" width="100%">
+</div>
+
+Or directly in the terminal:
 
 ![Terminal simulation](./images/screenshot.png)
