@@ -1,6 +1,5 @@
 use clap::Parser;
 use ndarray::Array2;
-use std::{thread::sleep, time};
 
 use heavens::{render, Galaxy};
 
@@ -60,6 +59,7 @@ fn main() {
 }
 
 /// Print the galaxy count to the terminal.
+#[allow(dead_code)]
 fn display(count: &Array2<u8>) {
     let mut buffer = String::new();
 
