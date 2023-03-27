@@ -8,7 +8,9 @@ license = "MIT"
 
 [dependencies]
 clap = { version = "4.1.13", features = ["derive"] }
+image = "0.24.6"
 nalgebra = "0.32.2"
 ndarray = "0.15.6"
+ndarray-stats = "0.5.1"
 ocl = "0.19.4"
 rand = "0.8.5"

@@ -2,7 +2,7 @@ use clap::Parser;
 use ndarray::Array2;
 use std::{thread::sleep, time};
 
-use heavens::Galaxy;
+use heavens::{render, Galaxy};
 
 const YEAR: f64 = 365.25 * 24.0 * 60.0 * 60.0;
 
@@ -37,14 +37,21 @@ fn main() {
         args.smoothing_length,
     );
 
+    let mut step = 0;
     loop {
         for _ in 0..100 {
             galaxy.evolve(0.01 * YEAR);
         }
 
         let count = galaxy.count(args.res);
-        display(&count);
-        sleep(time::Duration::from_millis(10));
+        let image = render::image(count, 10);
+        let png = render::encode(&image);
+        png.save(&format!("output/{0:>3}.png", step))
+            .expect("Failed to save image.");
+        // display(&count);
+        // sleep(time::Duration::from_millis(10));
+
+        step += 1;
     }
 }
 
