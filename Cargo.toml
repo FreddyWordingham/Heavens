@@ -7,4 +7,5 @@ edition = "2021"
 clap = { version = "4.1.13", features = ["derive"] }
 nalgebra = "0.32.2"
 ndarray = "0.15.6"
+ocl = "0.19.4"
 rand = "0.8.5"

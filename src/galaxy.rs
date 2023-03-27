@@ -1,12 +1,15 @@
-use nalgebra::Vector3;
+use nalgebra::{Point3, Vector3};
 use ndarray::Array2;
 use rand::Rng;
 use std::f64::consts::PI;
 
-use crate::particle::Particle;
+use crate::{nbody, Particle};
 
 /// Collection of matter.
 pub struct Galaxy {
+    /// Strength of gravity.
+    pub grav_strength: f64,
+
     /// Initial radius.
     pub radius: f64,
 
@@ -18,9 +21,10 @@ impl Galaxy {
     /// Construct a new instance.
     #[inline]
     #[must_use]
-    pub fn new(num_stars: usize, radius: f64) -> Self {
+    pub fn new(num_stars: usize, radius: f64, grav_strength: f64) -> Self {
         debug_assert!(num_stars > 0);
         debug_assert!(radius > 0.0);
+        debug_assert!(grav_strength > 0.0);
 
         let mut rng = rand::thread_rng();
 
@@ -32,11 +36,39 @@ impl Galaxy {
             let x = rho * theta.cos();
             let y = rho * theta.sin();
             let z = 0.0;
+            let pos = Point3::new(x, y, z);
 
-            stars.push(Particle::new(Vector3::new(x, y, z)));
+            let vel = Vector3::zeros();
+
+            stars.push(Particle::new(1.0, pos, vel));
         }
 
-        Self { radius, stars }
+        Self {
+            radius,
+            stars,
+            grav_strength,
+        }
+    }
+
+    /// Evolve the galaxy in time.
+    #[inline]
+    pub fn evolve(&mut self, dt: f64) {
+        debug_assert!(dt > 0.0);
+
+        // for star in &mut self.stars {
+        //     let mut acc = Vector3::zeros();
+        //     for other in &self.stars {
+        //         if star != other {
+        //             let dist_sq = distance_squared(&star.pos, &other.pos);
+        //             acc += self.grav_strength * other.mass / dist_sq
+        //                 * (other.pos - star.pos).normalize();
+        //         }
+        //     }
+
+        //     star.vel += acc * dt;
+        //     star.pos += star.vel * dt;
+        // }
+        nbody::nbody(&mut self.stars, dt);
     }
 
     /// Count the number stars on to a square 2D grid with a given resolution.

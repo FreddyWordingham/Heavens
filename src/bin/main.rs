@@ -4,6 +4,8 @@ use std::{thread::sleep, time};
 
 use constellation::Galaxy;
 
+const YEAR: f64 = 365.25 * 24.0 * 60.0 * 60.0;
+
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Args {
@@ -15,6 +17,9 @@ struct Args {
 
     #[arg(short, long, default_value = "512")]
     res: usize,
+
+    #[arg(short, long, default_value = "1.0")]
+    grav_strength: f64,
 }
 
 fn main() {
@@ -22,13 +27,14 @@ fn main() {
 
     let args = Args::parse();
 
-    let galaxy = Galaxy::new(args.num_stars, args.radius);
+    let mut galaxy = Galaxy::new(args.num_stars, args.radius, args.grav_strength);
 
     loop {
+        galaxy.evolve(0.1 * YEAR);
+
         let count = galaxy.count(args.res);
         display(&count);
         sleep(time::Duration::from_millis(100));
-        break;
     }
 }
 
