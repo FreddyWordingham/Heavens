@@ -68,7 +68,7 @@ impl Galaxy {
         //     star.vel += acc * dt;
         //     star.pos += star.vel * dt;
         // }
-        nbody::nbody(&mut self.stars, dt);
+        nbody::nbody(&mut self.stars, self.grav_strength, dt);
     }
 
     /// Count the number stars on to a square 2D grid with a given resolution.
