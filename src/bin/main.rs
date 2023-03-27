@@ -3,7 +3,7 @@ use ndarray::Array2;
 
 use heavens::{render, Galaxy};
 
-const YEAR: f64 = 365.25 * 24.0 * 60.0 * 60.0;
+const YEAR: f32 = 365.25 * 24.0 * 60.0 * 60.0;
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -12,16 +12,16 @@ struct Args {
     num_stars: usize,
 
     #[arg(short, long, default_value = "1.0e6")]
-    radius: f64,
+    radius: f32,
 
     #[arg(short, long, default_value = "512")]
     res: usize,
 
     #[arg(short, long)]
-    grav_strength: f64,
+    grav_strength: f32,
 
     #[arg(short, long)]
-    smoothing_length: f64,
+    smoothing_length: f32,
 
     #[clap(short, long, value_parser, num_args = 2.., value_delimiter = ' ')]
     cmap: Vec<String>,
@@ -32,7 +32,9 @@ fn main() {
 
     let args = Args::parse();
 
+    let mut rng = rand::thread_rng();
     let mut galaxy = Galaxy::new(
+        &mut rng,
         args.num_stars,
         args.radius,
         args.grav_strength,
@@ -53,7 +55,7 @@ fn main() {
         step += 1;
 
         for _ in 0..10 {
-            galaxy.evolve(0.01 * YEAR);
+            galaxy.evolve(&mut rng, 0.01 * YEAR);
         }
     }
 }

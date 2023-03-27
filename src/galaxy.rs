@@ -1,21 +1,21 @@
 use nalgebra::{Point3, Vector3};
 use ndarray::Array2;
 use palette::{Gradient, LinSrgb};
-use rand::Rng;
-use std::f64::consts::PI;
+use rand::{rngs::ThreadRng, seq::SliceRandom, Rng};
+use std::f32::consts::PI;
 
 use crate::{nbody, Particle};
 
 /// Collection of matter.
 pub struct Galaxy {
     /// Strength of gravity.
-    pub grav_strength: f64,
+    pub grav_strength: f32,
 
     /// Smoothing length.
-    pub smoothing_length: f64,
+    pub smoothing_length: f32,
 
     /// Initial radius.
-    pub radius: f64,
+    pub radius: f32,
 
     /// Massive particles.
     pub stars: Vec<Particle>,
@@ -29,10 +29,11 @@ impl Galaxy {
     #[inline]
     #[must_use]
     pub fn new(
+        rng: &mut impl Rng,
         num_stars: usize,
-        radius: f64,
-        grav_strength: f64,
-        smoothing_length: f64,
+        radius: f32,
+        grav_strength: f32,
+        smoothing_length: f32,
         cmap: &[String],
     ) -> Self {
         debug_assert!(num_stars > 0);
@@ -41,12 +42,10 @@ impl Galaxy {
         debug_assert!(smoothing_length > 0.0);
         debug_assert!(cmap.len() > 0);
 
-        let mut rng = rand::thread_rng();
-
         let mut stars = Vec::with_capacity(num_stars);
         for _ in 0..num_stars {
             let theta = rng.gen_range(0.0..2.0 * PI);
-            let rho = rng.gen_range(0.0..1.0f64).sqrt() * radius;
+            let rho = rng.gen_range(0.0..1.0f32).sqrt() * radius;
 
             let x = rho * theta.cos();
             let y = rho * theta.sin();
@@ -81,8 +80,11 @@ impl Galaxy {
 
     /// Evolve the galaxy in time.
     #[inline]
-    pub fn evolve(&mut self, dt: f64) {
+    pub fn evolve(&mut self, rng: &mut ThreadRng, dt: f32) {
         debug_assert!(dt > 0.0);
+
+        self.stars.shuffle(rng);
+
         nbody::nbody(
             &mut self.stars,
             self.grav_strength,
@@ -99,7 +101,7 @@ impl Galaxy {
 
         let s = 1.0;
 
-        let delta = s * 2.0 * self.radius / res as f64;
+        let delta = s * 2.0 * self.radius / res as f32;
         let inv_delta = 1.0 / delta;
 
         let mut grid = Array2::zeros((res, res));
