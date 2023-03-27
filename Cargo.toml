@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 authors = ["Freddy Wordingham <freddy@digilab.co.uk>"]
 license_file = "LICENSE"
+description = "N-body simulation of a star cluster using Rust + GPU"
 
 [dependencies]
 clap = { version = "4.1.13", features = ["derive"] }
