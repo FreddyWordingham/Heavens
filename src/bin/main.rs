@@ -44,7 +44,7 @@ fn main() {
 
         let count = galaxy.count(args.res);
         display(&count);
-        sleep(time::Duration::from_millis(100));
+        sleep(time::Duration::from_millis(10));
     }
 }
 

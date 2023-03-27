@@ -30,7 +30,7 @@ pub fn nbody(particles: &mut [Particle], grav_strength: f64, smoothing_length: f
                 float dy = positions_y[m] - y;
                 float dz = positions_z[m] - z;
 
-                float r = sqrt((dx * dx) + (dy * dy) + (dz * dz));
+                float r = max(sqrt((dx * dx) + (dy * dy) + (dz * dz)), (float){smoothing_length});
                 float r_inv = 1.0 / (r * r * r);
 
                 buffer_x[n] += r_inv * dx * {grav_strength};
