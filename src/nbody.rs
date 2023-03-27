@@ -1,7 +1,7 @@
 //! N-Body calculations.
 
 use nalgebra::Vector3;
-use ocl::{builders::BufferBuilder, ProQue};
+use ocl::ProQue;
 
 use crate::Particle;
 
