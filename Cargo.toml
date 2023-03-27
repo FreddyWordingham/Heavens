@@ -1,6 +1,6 @@
 [package]
 name = "heavens"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 authors = ["Freddy Wordingham <freddy@digilab.co.uk>"]
 description = "N-body simulation of a star cluster using Rust + GPU"
