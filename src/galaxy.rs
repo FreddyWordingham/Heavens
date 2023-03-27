@@ -42,7 +42,9 @@ impl Galaxy {
             let z = 0.0;
             let pos = Point3::new(x, y, z);
 
-            let vel = Vector3::zeros();
+            let mut vel = Vector3::zeros();
+            vel.x = 1e-9 * -y;
+            vel.y = 1e-9 * x;
 
             stars.push(Particle::new(1.0, pos, vel));
         }
