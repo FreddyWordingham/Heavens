@@ -4,13 +4,13 @@ use std::path::Path;
 #[derive(Debug, Deserialize)]
 pub struct Parameters {
     /// Gravitational strength factor.
-    gravitational_strength: f32,
+    pub gravitational_strength: f32,
 
     /// Minimum calculation distance between massive particles.
-    smoothing_length: f32,
+    pub smoothing_length: f32,
 
     /// Colour map.
-    cmap: Vec<String>,
+    pub cmap: Vec<String>,
 }
 
 impl Parameters {
