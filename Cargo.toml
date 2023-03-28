@@ -10,7 +10,7 @@ license = "MIT"
 clap = { version = "4.1.13", features = ["derive"] }
 image = "0.24.6"
 json5 = "0.4.1"
-nalgebra = "0.32.2"
+nalgebra = { version = "0.32.2", features = ["serde-serialize"]}
 ndarray = "0.15.6"
 ndarray-stats = "0.5.1"
 ocl = "0.19.4"
