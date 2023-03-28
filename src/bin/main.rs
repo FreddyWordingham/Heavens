@@ -1,4 +1,5 @@
 use clap::Parser;
+use std::path::Path;
 
 use heavens::Parameters;
 
@@ -13,5 +14,5 @@ fn main() {
     let args = Args::parse();
     println!("Hello, Galaxy!");
     println!("{:?}", args);
-    let _params = Parameters::load(args.parameters_path);
+    let _params = Parameters::load(Path::new(&args.parameters_path));
 }
