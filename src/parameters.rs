@@ -1,6 +1,8 @@
 use serde::Deserialize;
 use std::path::Path;
 
+use crate::Galaxy;
+
 #[derive(Debug, Deserialize)]
 pub struct Parameters {
     /// Gravitational strength factor.
@@ -11,6 +13,9 @@ pub struct Parameters {
 
     /// Colour map.
     pub cmap: Vec<String>,
+
+    /// Galaxies.
+    pub galaxies: Vec<Galaxy>,
 }
 
 impl Parameters {
