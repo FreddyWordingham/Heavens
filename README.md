@@ -15,6 +15,13 @@ git clone https://github.com/FreddyWordingham/Constellation
 cd Constellation
 ```
 
+Create the `output/` directory:
+
+```shell
+mkdir output
+
+```
+
 Compile the code:
 
 ```shell
