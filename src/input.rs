@@ -1,23 +1,31 @@
+use nalgebra::Vector3;
 use palette::{Gradient, LinSrgb};
-use serde::Deserialize;
-use std::path::Path;
+use rand::Rng;
 
 use crate::Parameters;
 
+/// Computed simulation input.
 pub struct Input {
     /// Gravitational strength factor.
     gravitational_strength: f32,
-
     /// Minimum calculation distance between massive particles.
     smoothing_length: f32,
-
     /// Colour map.
     cmap: Gradient<LinSrgb>,
+    /// Positions.
+    pos: Vec<Vector3<f32>>,
 }
 
 impl Input {
     /// Build an input structure from a parameters object.
-    pub fn build(params: &Parameters) -> Self {
+    pub fn build(mut rng: impl Rng, params: &Parameters) -> Self {
+        let pos = params
+            .galaxies
+            .iter()
+            .map(|galaxy| galaxy.generate(&mut rng, 1000))
+            .flatten()
+            .collect::<Vec<_>>();
+
         Input {
             gravitational_strength: params.gravitational_strength,
             smoothing_length: params.smoothing_length,
@@ -31,6 +39,7 @@ impl Input {
                     })
                     .collect::<Vec<_>>(),
             ),
+            pos,
         }
     }
 }

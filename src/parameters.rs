@@ -7,13 +7,10 @@ use crate::Galaxy;
 pub struct Parameters {
     /// Gravitational strength factor.
     pub gravitational_strength: f32,
-
     /// Minimum calculation distance between massive particles.
     pub smoothing_length: f32,
-
     /// Colour map.
     pub cmap: Vec<String>,
-
     /// Galaxies.
     pub galaxies: Vec<Galaxy>,
 }
