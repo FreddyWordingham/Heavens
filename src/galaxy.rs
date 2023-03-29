@@ -1,4 +1,4 @@
-//! Galaxy input parameters.
+//! Galaxy initialisation.
 
 use nalgebra::Vector3;
 use rand::Rng;

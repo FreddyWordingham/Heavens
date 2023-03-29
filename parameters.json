@@ -1,6 +1,6 @@
 {
-    "gravitational_strength": 1.0,
-    "smoothing_length": 1.0e-3,
+    "grav_strength": 1.0,
+    "smooth_length": 1.0e-3,
     "cmap": ["#0000ff", "#00ffff", "#00ff00", "#ffff00", "#ff0000"],
     "galaxies": [
         {

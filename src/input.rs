@@ -1,4 +1,5 @@
-use nalgebra::Vector3;
+//! Simulation input.
+
 use palette::{Gradient, LinSrgb};
 use rand::Rng;
 
@@ -7,13 +8,13 @@ use crate::Parameters;
 /// Computed simulation input.
 pub struct Input {
     /// Gravitational strength factor.
-    gravitational_strength: f32,
+    grav_strength: f32,
     /// Minimum calculation distance between massive particles.
-    smoothing_length: f32,
+    smooth_length: f32,
     /// Colour map.
     cmap: Gradient<LinSrgb>,
-    /// Positions.
-    pos: Vec<Vector3<f32>>,
+    /// Positions stored as a flat array of [x[0], y[0], z[0], x[1], y[1], z[1], ..., x[n-1], y[n-1], z[n-1]]
+    pos: Vec<f32>,
 }
 
 impl Input {
@@ -24,11 +25,13 @@ impl Input {
             .iter()
             .map(|galaxy| galaxy.generate(&mut rng, 1000))
             .flatten()
+            .map(|v| [v.x, v.y, v.z])
+            .flatten()
             .collect::<Vec<_>>();
 
         Input {
-            gravitational_strength: params.gravitational_strength,
-            smoothing_length: params.smoothing_length,
+            grav_strength: params.grav_strength,
+            smooth_length: params.smooth_length,
             cmap: Gradient::new(
                 params
                     .cmap

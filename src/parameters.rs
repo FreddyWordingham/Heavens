@@ -1,3 +1,5 @@
+//! Human readable parameters.
+
 use serde::Deserialize;
 use std::path::Path;
 
@@ -6,9 +8,9 @@ use crate::Galaxy;
 #[derive(Debug, Deserialize)]
 pub struct Parameters {
     /// Gravitational strength factor.
-    pub gravitational_strength: f32,
+    pub grav_strength: f32,
     /// Minimum calculation distance between massive particles.
-    pub smoothing_length: f32,
+    pub smooth_length: f32,
     /// Colour map.
     pub cmap: Vec<String>,
     /// Galaxies.
