@@ -1,4 +1,4 @@
-//! Galaxy initialisation.
+//! Particle setup.
 
 use nalgebra::Vector3;
 use rand::Rng;

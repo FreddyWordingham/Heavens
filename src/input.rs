@@ -3,7 +3,7 @@
 use palette::{Gradient, LinSrgb};
 use rand::Rng;
 
-use crate::Parameters;
+use crate::{Camera, Parameters};
 
 /// Computed simulation input.
 pub struct Input {
@@ -15,6 +15,8 @@ pub struct Input {
     cmap: Gradient<LinSrgb>,
     /// Positions stored as a flat array of [x[0], y[0], z[0], x[1], y[1], z[1], ..., x[n-1], y[n-1], z[n-1]]
     pos: Vec<f32>,
+    /// Cameras.
+    cameras: Vec<Camera>,
 }
 
 impl Input {
@@ -43,6 +45,7 @@ impl Input {
                     .collect::<Vec<_>>(),
             ),
             pos,
+            cameras: params.cameras.clone(),
         }
     }
 }

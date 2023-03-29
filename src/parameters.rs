@@ -3,7 +3,7 @@
 use serde::Deserialize;
 use std::path::Path;
 
-use crate::Galaxy;
+use crate::{Camera, Galaxy};
 
 #[derive(Debug, Deserialize)]
 pub struct Parameters {
@@ -15,6 +15,8 @@ pub struct Parameters {
     pub cmap: Vec<String>,
     /// Galaxies.
     pub galaxies: Vec<Galaxy>,
+    /// Cameras.
+    pub cameras: Vec<Camera>,
 }
 
 impl Parameters {
