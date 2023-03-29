@@ -23,7 +23,7 @@ impl Galaxy {
 
         for _ in 0..n {
             let theta = rng.gen_range(0.0..2.0 * PI);
-            let rho = rng.gen_range(0.0..1.0) * self.radius;
+            let rho = rng.gen_range(0.0..1.0f32).sqrt() * self.radius;
 
             let x = rho * theta.cos();
             let y = rho * theta.sin();
