@@ -2,8 +2,9 @@
 
 use palette::{Gradient, LinSrgb};
 use rand::Rng;
+use std::path::Path;
 
-use crate::{Camera, Parameters};
+use crate::{render, Camera, Parameters};
 
 /// Computed simulation input.
 pub struct Input {
@@ -21,6 +22,8 @@ pub struct Input {
 
 impl Input {
     /// Build an input structure from a parameters object.
+    #[inline]
+    #[must_use]
     pub fn build(mut rng: impl Rng, params: &Parameters) -> Self {
         let pos = params
             .galaxies
@@ -47,6 +50,26 @@ impl Input {
             pos,
             cameras: params.cameras.clone(),
         }
+    }
+
+    /// Render.
+    #[inline]
+    #[must_use]
+    pub fn render(&self, output_dir: &Path, step_id: usize) {
+        self.cameras
+            .iter()
+            .map(|camera| camera.render(&self.pos))
+            .enumerate()
+            .map(|(i, img)| {
+                let path = output_dir
+                    .join(format!("{}", i))
+                    .join(format!("{}.png", step_id));
+                let img = render::image(&img, 4.0, &self.cmap);
+                render::encode(&img)
+                    .save(&path)
+                    .expect("Failed to save image.");
+            })
+            .collect::<Vec<_>>();
     }
 }
 

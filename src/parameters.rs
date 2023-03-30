@@ -7,6 +7,12 @@ use crate::{Camera, Galaxy};
 
 #[derive(Debug, Deserialize)]
 pub struct Parameters {
+    /// Output directory.
+    pub output_dir: String,
+    /// Number of particles.
+    pub num_particles: usize,
+    /// Number of steps.
+    pub num_steps: usize,
     /// Gravitational strength factor.
     pub grav_strength: f32,
     /// Minimum calculation distance between massive particles.

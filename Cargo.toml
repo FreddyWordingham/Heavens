@@ -12,7 +12,6 @@ image = "0.24.6"
 json5 = "0.4.1"
 nalgebra = { version = "0.32.2", features = ["serde-serialize"]}
 ndarray = "0.15.6"
-ndarray-stats = "0.5.1"
 ocl = "0.19.4"
 palette = "0.6.1"
 rand = "0.8.5"

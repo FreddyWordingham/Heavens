@@ -16,5 +16,6 @@ fn main() {
     println!("{:?}", args);
     let params = Parameters::load(Path::new(&args.parameters_path));
     let mut rng = rand::thread_rng();
-    let _input = Input::build(&mut rng, &params);
+    let input = Input::build(&mut rng, &params);
+    // input.render(Path::new("output"), 0);
 }
