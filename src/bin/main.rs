@@ -15,8 +15,8 @@ fn main() {
     println!("Hello, Galaxy!");
     println!("{:?}", args);
     let params = Parameters::load(Path::new(&args.parameters_path));
-    println!("{:#?}", params);
+    // println!("{:#?}", params);
     let mut rng = rand::thread_rng();
     let input = Input::build(&mut rng, &params);
-    // input.render(Path::new("output"), 0);
+    input.render(Path::new("output"), 0);
 }

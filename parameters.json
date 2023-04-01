@@ -1,40 +1,43 @@
 {
     "output_dir": "output",
-    "num_particles": 1e9,
     "num_steps": 1e3,
     "grav_strength": 1.0,
     "smooth_length": 1.0e-3,
-    "cmap": ["#0000ff", "#00ffff", "#00ff00", "#ffff00", "#ff0000"],
     "galaxies": [
         {
+            "num_particles": 1e5,
             "pos": [0.0, 0.0, 0.0],
-            "radius": 0.1
+            "radius": 0.5
         }
     ],
     "cameras": [
         {
             "centre": [0.0, 0.0],
+            "scale": 0.25,
+            "res": 128,
+            "norm": 4,
+            "cmap": ["#000000", "#ffffff"]
+        },
+        {
+            "centre": [0.0, 0.0],
+            "scale": 0.5,
+            "res": 128,
+            "norm": 4,
+            "cmap": ["#000000", "#ffffff"]
+        },
+        {
+            "centre": [0.0, 0.0],
             "scale": 1.25,
-            "res": 512,
-            "norm": 4
+            "res": 128,
+            "norm": 4,
+            "cmap": ["#000000", "#ffffff"]
         },
         {
             "centre": [0.0, 0.0],
             "scale": 2.5,
-            "res": 512,
-            "norm": 4
-        },
-        {
-            "centre": [0.0, 0.0],
-            "scale": 5.0,
-            "res": 512,
-            "norm": 4
-        },
-        {
-            "centre": [0.0, 0.0],
-            "scale": 10.0,
-            "res": 512,
-            "norm": 4
+            "res": 128,
+            "norm": 4,
+            "cmap": ["#000000", "#ffffff"]
         }
     ]
 }

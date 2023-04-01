@@ -9,16 +9,12 @@ use crate::{Camera, Galaxy};
 pub struct Parameters {
     /// Output directory.
     pub output_dir: String,
-    /// Number of particles.
-    pub num_particles: usize,
     /// Number of steps.
     pub num_steps: usize,
     /// Gravitational strength factor.
     pub grav_strength: f32,
     /// Minimum calculation distance between massive particles.
     pub smooth_length: f32,
-    /// Colour map.
-    pub cmap: Vec<String>,
     /// Galaxies.
     pub galaxies: Vec<Galaxy>,
     /// Cameras.

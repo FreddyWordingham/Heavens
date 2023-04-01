@@ -12,7 +12,7 @@ pub fn image(data: &Array2<f32>, max: f32, cmap: &Gradient<LinSrgb>) -> Array3<u
     let (width, height) = data.dim();
     for yi in 0..height {
         for xi in 0..width {
-            let x = (data[(xi, yi)] as f32 * max_inv).max(1.0);
+            let x = (data[(xi, yi)] as f32 * max_inv).min(1.0);
             let col = cmap.get(x);
             let u8s: [u8; 3] = col.into_format().into_raw();
             cols.slice_mut(s![xi, yi, ..]).assign(&arr1(&u8s));
