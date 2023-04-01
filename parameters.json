@@ -27,14 +27,14 @@
         },
         {
             "centre": [0.0, 0.0],
-            "scale": 1.25,
+            "scale": 1.0,
             "res": 128,
             "norm": 4,
             "cmap": ["#000000", "#ffffff"]
         },
         {
             "centre": [0.0, 0.0],
-            "scale": 2.5,
+            "scale": 2.0,
             "res": 128,
             "norm": 4,
             "cmap": ["#000000", "#ffffff"]

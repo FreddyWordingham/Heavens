@@ -43,14 +43,9 @@ impl Camera {
         for i in 0..num_particles {
             let x = pos[3 * i];
             let y = pos[(3 * i) + 1];
-            // let z = pos[(3 * i) + 2];
 
             // NOTE: This has to be done in floating point arithmetic to avoid particles collecting at zero.
-            if x <= self.centre.x - (0.5 * self.scale)
-                || x >= self.centre.x + (0.5 * self.scale)
-                || y <= self.centre.y - (0.5 * self.scale)
-                || y >= self.centre.y + (0.5 * self.scale)
-            {
+            if x <= self.centre.x - (0.5 * self.scale) || y <= self.centre.y - (0.5 * self.scale) {
                 continue;
             }
 
