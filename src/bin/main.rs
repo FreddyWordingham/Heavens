@@ -17,8 +17,13 @@ fn main() {
     let params = Parameters::load(Path::new(&args.parameters_path));
     create_output_dirs(params.cameras.len());
     let mut rng = rand::thread_rng();
-    let input = Input::build(&mut rng, &params);
-    input.render(Path::new("output"), 0);
+    let mut input = Input::build(&mut rng, &params);
+    for n in 0..params.num_steps {
+        println!("Step: {}", n);
+        input.render(Path::new("output"), n);
+        input.evolve(params.dt);
+    }
+    input.render(Path::new("output"), params.num_steps);
 }
 
 fn create_output_dirs(num_cameras: usize) {

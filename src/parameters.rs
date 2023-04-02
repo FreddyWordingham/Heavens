@@ -11,6 +11,8 @@ pub struct Parameters {
     pub output_dir: String,
     /// Number of steps.
     pub num_steps: usize,
+    /// Time step in seconds.
+    pub dt: f32,
     /// Gravitational strength factor.
     pub grav_strength: f32,
     /// Minimum calculation distance between massive particles.
