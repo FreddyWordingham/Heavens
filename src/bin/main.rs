@@ -32,7 +32,7 @@ fn create_output_dirs(num_cameras: usize) {
         std::fs::create_dir(output_dir).unwrap();
     }
     for i in 0..num_cameras {
-        let camera_dir = output_dir.join(format!("camera_{}", i));
+        let camera_dir = output_dir.join(format!("camera_{:03}", i));
         if !camera_dir.exists() {
             std::fs::create_dir(camera_dir).unwrap();
         }

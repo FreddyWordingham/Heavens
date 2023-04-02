@@ -54,8 +54,8 @@ impl Input {
             .enumerate()
             .for_each(|(i, img)| {
                 let path = output_dir
-                    .join(format!("camera_{}", i))
-                    .join(format!("{}.png", step_id));
+                    .join(format!("camera_{:03}", i))
+                    .join(format!("{:06}.png", step_id));
                 render::encode(&img)
                     .save(&path)
                     .expect("Failed to save image.");
