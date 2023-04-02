@@ -63,8 +63,6 @@ impl Gravity {
     /// Evolve the simulation in time.
     #[inline]
     pub fn evolve(&mut self, pos: &mut [f32], vel: &mut [f32], dt: f32) {
-        debug_assert!(dt.abs() > 1e-9);
-
         self.gpu_pos.write(&*pos).enq().unwrap();
         let kernel = self
             .pro_que

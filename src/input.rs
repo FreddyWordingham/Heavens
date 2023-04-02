@@ -7,10 +7,6 @@ use crate::{render, Camera, Gravity, Parameters};
 
 /// Computed simulation input.
 pub struct Input {
-    // /// Gravitational strength factor.
-    // grav_strength: f32,
-    // /// Minimum calculation distance between massive particles.
-    // smooth_length: f32,
     /// Positions stored as a flat array of [x[0], y[0], z[0], x[1], y[1], z[1], ..., x[n-1], y[n-1], z[n-1]]
     pos: Vec<f32>,
     /// Velocities stored as a flat array of [Vx[0], Vy[0], Vz[0], Vx[1], Vy[1], Vz[1], ..., Vx[n-1], Vy[n-1], Vz[n-1]]
@@ -19,6 +15,8 @@ pub struct Input {
     cameras: Vec<Camera>,
     /// Gravitational force.
     gravity: Gravity,
+    /// Sub-steps
+    sub_steps: usize,
 }
 
 impl Input {
@@ -26,22 +24,32 @@ impl Input {
     #[inline]
     #[must_use]
     pub fn build(mut rng: impl Rng, params: &Parameters) -> Self {
-        let pos = params
-            .galaxies
+        let mut pos = Vec::new();
+        let mut vel = Vec::new();
+        for galaxy in &params.galaxies {
+            let (p, v) = galaxy.generate(&mut rng);
+            pos.extend(p);
+            vel.extend(v);
+        }
+
+        let pos = pos
             .iter()
-            .map(|galaxy| galaxy.generate(&mut rng))
+            .map(|p| [p.x, p.y, p.z])
             .flatten()
+            .collect::<Vec<_>>();
+        let vel = vel
+            .iter()
             .map(|v| [v.x, v.y, v.z])
             .flatten()
             .collect::<Vec<_>>();
         let num_particles = pos.len() / 3;
-        let vel = vec![0.0; num_particles * 3];
 
         Input {
             pos,
             vel,
             cameras: params.cameras.clone(),
             gravity: Gravity::new(params.grav_strength, params.smooth_length, num_particles),
+            sub_steps: params.sub_steps.max(1),
         }
     }
 
@@ -65,7 +73,9 @@ impl Input {
     /// Evolve the simulation in time.
     #[inline]
     pub fn evolve(&mut self, dt: f32) {
-        debug_assert!(dt.abs() > 1e-9);
-        self.gravity.evolve(&mut self.pos, &mut self.vel, dt);
+        let f = dt / self.sub_steps as f32;
+        for _ in 0..self.sub_steps {
+            self.gravity.evolve(&mut self.pos, &mut self.vel, f);
+        }
     }
 }

@@ -1,20 +1,29 @@
 {
     "output_dir": "output",
-    "num_steps": 1e2,
-    "dt": 1.0e-1,
-    "grav_strength": 1.0e-1,
+    "num_steps": 1000,
+    "dt": 1.0e-2,
+    "grav_strength": 1.0e-3,
     "smooth_length": 1.0,
     "galaxies": [
         {
             "num_particles": 1e3,
             "pos": [0.0, 0.0, 0.0],
-            "radius": 1.0e2
+            "vel": [0.0, 0.0, 0.0],
+            "radius": 1.0e1,
+            "rotation": 0.0
         }
     ],
     "cameras": [
         {
             "centre": [0.0, 0.0],
-            "scale": 3.0e2,
+            "scale": 2.0e1,
+            "res": 128,
+            "norm": 1,
+            "cmap": ["#000000", "#000022", "#000077", "#AA00AA", "#AA0000", "#FFFF00", "#FFFFFF"]
+        },
+        {
+            "centre": [0.0, 0.0],
+            "scale": 2.0e2,
             "res": 128,
             "norm": 1,
             "cmap": ["#000000", "#000022", "#000077", "#AA00AA", "#AA0000", "#FFFF00", "#FFFFFF"]

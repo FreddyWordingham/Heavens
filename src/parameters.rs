@@ -11,6 +11,8 @@ pub struct Parameters {
     pub output_dir: String,
     /// Number of steps.
     pub num_steps: usize,
+    /// Sub-steps
+    pub sub_steps: usize,
     /// Time step in seconds.
     pub dt: f32,
     /// Gravitational strength factor.

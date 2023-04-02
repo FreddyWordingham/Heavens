@@ -12,16 +12,21 @@ pub struct Galaxy {
     pub num_particles: usize,
     /// Centre.
     pub pos: Vector3<f32>,
+    /// Average velocity.
+    pub vel: Vector3<f32>,
     /// Radius.
     pub radius: f32,
+    /// Rotation.
+    pub rotation: f32,
 }
 
 impl Galaxy {
     /// Generate the mass distribution of the galaxy.
     #[inline]
     #[must_use]
-    pub fn generate(&self, mut rng: impl Rng) -> Vec<Vector3<f32>> {
+    pub fn generate(&self, mut rng: impl Rng) -> (Vec<Vector3<f32>>, Vec<Vector3<f32>>) {
         let mut pos = Vec::with_capacity(self.num_particles);
+        let mut vel = Vec::with_capacity(self.num_particles);
 
         for _ in 0..self.num_particles {
             let theta = rng.gen_range(0.0..2.0 * PI);
@@ -32,8 +37,9 @@ impl Galaxy {
 
             let p = Vector3::new(x, y, 0.0);
             pos.push(p + self.pos);
+            vel.push(self.vel + Vector3::new(-y * self.rotation, x * self.rotation, 0.0));
         }
 
-        pos
+        (pos, vel)
     }
 }
