@@ -1,6 +1,6 @@
 {
     "output_dir": "output",
-    "num_steps": 1e3,
+    "num_steps": 1e4,
     "dt": 1.0e-1,
     "grav_strength": 1.0e-1,
     "smooth_length": 1.0,
