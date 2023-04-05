@@ -15,9 +15,9 @@ pub struct Gravity {
     /// GPU position buffer.
     gpu_pos: Buffer<f32>,
     /// GPU force buffer.
-    gpu_force: Buffer<f32>,
+    gpu_acceleration: Buffer<f32>,
     /// CPU force buffer.
-    cpu_force: Vec<f32>,
+    cpu_acceleration: Vec<f32>,
 }
 
 impl Gravity {
@@ -43,20 +43,20 @@ impl Gravity {
             .len(num_particles * 3)
             .build()
             .unwrap();
-        let gpu_force = pro_que
+        let gpu_acceleration = pro_que
             .buffer_builder::<f32>()
             .len(num_particles * 3)
             .build()
             .unwrap();
-        let cpu_force = vec![0.0; num_particles * 3];
+        let cpu_acceleration = vec![0.0; num_particles * 3];
 
         Self {
             strength,
             smoothing_length,
             pro_que,
             gpu_pos,
-            gpu_force,
-            cpu_force,
+            gpu_acceleration,
+            cpu_acceleration,
         }
     }
 
@@ -67,19 +67,22 @@ impl Gravity {
         let kernel = self
             .pro_que
             .kernel_builder("nbody")
-            .arg(&self.gpu_force)
+            .arg(&self.gpu_acceleration)
             .arg(&self.gpu_pos)
             .build()
             .unwrap();
         unsafe { kernel.enq().unwrap() };
 
-        self.gpu_force.read(&mut self.cpu_force).enq().unwrap();
-        if self.cpu_force.iter().any(|&x| x.is_nan()) {
+        self.gpu_acceleration
+            .read(&mut self.cpu_acceleration)
+            .enq()
+            .unwrap();
+        if self.cpu_acceleration.iter().any(|&x| x.is_nan()) {
             panic!("NaN detected in force buffer.");
         }
 
         for i in 0..pos.len() {
-            vel[i] += self.cpu_force[i] * dt;
+            vel[i] += self.cpu_acceleration[i] * dt;
             pos[i] += vel[i] * dt;
         }
     }
