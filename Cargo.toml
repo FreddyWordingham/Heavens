@@ -1,18 +1,8 @@
 [package]
 name = "heavens"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2021"
 authors = ["Freddy Wordingham <freddy@digilab.co.uk>"]
-description = "N-body simulation of a star cluster using Rust + GPU"
-license = "MIT"
+description = "N-body GPU simulations with rendering"
 
 [dependencies]
-clap = { version = "4.1.13", features = ["derive"] }
-image = "0.24.6"
-json5 = "0.4.1"
-nalgebra = { version = "0.32.2", features = ["serde-serialize"]}
-ndarray = "0.15.6"
-ocl = "0.19.4"
-palette = "0.6.1"
-rand = "0.8.5"
-serde = { version = "1.0.*", features = ["derive"] }
