@@ -1,5 +1,5 @@
 use heavens::run;
 
 fn main() {
-    run();
+    pollster::block_on(run());
 }

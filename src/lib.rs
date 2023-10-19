@@ -1,41 +1,18 @@
+mod state;
+
 use log;
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
 use winit::{
-    event::{Event, KeyboardInput, VirtualKeyCode, WindowEvent},
-    event_loop::EventLoop,
+    event::{ElementState, Event, KeyboardInput, VirtualKeyCode, WindowEvent},
+    event_loop::{ControlFlow, EventLoop},
     window::{Window, WindowBuilder},
 };
 
-fn render() {
-    println!("RedrawRequested");
-}
-
-fn update(loop_number: u32, window: &mut Window) {
-    println!("Update");
-    if loop_number % 100 == 0 {
-        println!("Redraw");
-        window.request_redraw();
-    }
-}
-
-fn keyboard_input(
-    input: KeyboardInput,
-    window: &mut Window,
-    control_flow: &mut winit::event_loop::ControlFlow,
-) {
-    let key = input.virtual_keycode.unwrap();
-    println!("Input: Keypress: {:?}", key);
-
-    if key == VirtualKeyCode::Escape {
-        println!("Escape pressed; stopping");
-        window.set_title("Escape pressed");
-        control_flow.set_exit();
-    }
-}
+use crate::state::State;
 
 #[cfg_attr(target_arch = "wasm32", wasm_bindgen(start))]
-pub fn run() {
+pub async fn run() {
     let width = 800;
     let height = 600;
 
@@ -49,7 +26,7 @@ pub fn run() {
     }
 
     let event_loop = EventLoop::new();
-    let mut window = WindowBuilder::new().build(&event_loop).unwrap();
+    let window = WindowBuilder::new().build(&event_loop).unwrap();
 
     #[cfg(target_arch = "wasm32")]
     {
@@ -70,34 +47,63 @@ pub fn run() {
             .expect("Couldn't append canvas to document body.");
     }
 
-    let mut loop_number = 0;
+    let mut state = State::new(window).await;
+
     event_loop.run(move |event, _, control_flow| {
         // control_flow.set_poll(); // Continuously runs the event loop
         control_flow.set_wait(); // Runs the event loop only when an event is received
 
         match event {
             Event::WindowEvent {
-                event: WindowEvent::CloseRequested,
-                ..
-            } => {
-                println!("The close button was pressed; stopping");
-                control_flow.set_exit();
-            }
-            Event::WindowEvent {
-                event: WindowEvent::KeyboardInput { input, .. },
-                ..
-            } => {
-                keyboard_input(input, &mut window, control_flow);
+                window_id,
+                ref event,
+            } if window_id == state.window().id() => {
+                if !state.input(event) {
+                    match event {
+                        WindowEvent::CloseRequested
+                        | WindowEvent::KeyboardInput {
+                            input:
+                                KeyboardInput {
+                                    state: ElementState::Pressed,
+                                    virtual_keycode: Some(VirtualKeyCode::Escape),
+                                    ..
+                                },
+                            ..
+                        } => *control_flow = ControlFlow::Exit,
+                        WindowEvent::Resized(physical_size) => {
+                            state.resize(*physical_size);
+                        }
+                        WindowEvent::ScaleFactorChanged { new_inner_size, .. } => {
+                            state.resize(**new_inner_size);
+                        }
+                        _ => {}
+                    }
+                }
             }
             Event::MainEventsCleared => {
-                update(loop_number, &mut window);
+                log::info!("Main events cleared");
+                // state.window().request_redraw();
             }
-            Event::RedrawRequested(_) => {
-                render();
+            Event::RedrawRequested(window_id) if window_id == state.window().id() => {
+                log::info!("Redraw requested");
+                state.update();
+                match state.render() {
+                    Ok(_) => {}
+                    // Reconfigure the surface if it's lost or outdated
+                    Err(wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated) => {
+                        state.resize(state.size())
+                    }
+                    // The system is out of memory, we should probably quit
+                    Err(wgpu::SurfaceError::OutOfMemory) => *control_flow = ControlFlow::Exit,
+
+                    Err(wgpu::SurfaceError::Timeout) => log::warn!("Surface timeout"),
+                }
+            }
+            Event::RedrawEventsCleared => {
+                log::info!("Redraw events cleared");
+                state.window().request_redraw();
             }
             _ => (),
         }
-
-        loop_number += 1;
     });
 }
