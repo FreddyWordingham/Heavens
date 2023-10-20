@@ -5,8 +5,6 @@ use winit::{event::WindowEvent, window::Window};
 use crate::NBody;
 
 pub struct State {
-    num_particles: u32,
-
     surface: wgpu::Surface,
     device: wgpu::Device,
     queue: wgpu::Queue,
@@ -14,9 +12,13 @@ pub struct State {
     size: winit::dpi::PhysicalSize<u32>,
     window: Window,
 
+    num_massive_particles: u32,
+    massive_positions_and_masses_buffer: wgpu::Buffer,
+
     render_pipeline: wgpu::RenderPipeline,
 
-    massive_positions_buffer: wgpu::Buffer,
+    calculate_massive_positions_pipeline: wgpu::ComputePipeline,
+    calculate_massive_positions_bind_group: wgpu::BindGroup,
 }
 
 impl State {
@@ -80,26 +82,37 @@ impl State {
         surface.configure(&device, &config);
 
         // Vertex buffer.
-        let num_particles = nbody.num_massive_particles() as u32;
-        let massive_positions_buffer =
+        let num_massive_particles = nbody.num_massive_particles() as u32;
+        let data: Vec<[f32; 4]> = nbody
+            .massive_positions()
+            .iter()
+            .zip(nbody.massive_masses())
+            .map(|(&position, mass)| [position[0], position[1], position[2], *mass])
+            .collect();
+        let massive_positions_and_masses_buffer =
             device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
                 label: Some("Vertex Buffer"),
-                contents: bytemuck::cast_slice(nbody.massive_positions()),
-                usage: wgpu::BufferUsages::VERTEX,
+                contents: bytemuck::cast_slice(&data),
+                usage: wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::STORAGE,
             });
-
-        let massive_positions_buffer_layout = wgpu::VertexBufferLayout {
-            array_stride: 3 * std::mem::size_of::<f32>() as wgpu::BufferAddress,
+        let massive_positions_and_masses_buffer_layout = wgpu::VertexBufferLayout {
+            array_stride: 4 * std::mem::size_of::<f32>() as wgpu::BufferAddress,
             step_mode: wgpu::VertexStepMode::Vertex,
             attributes: &[wgpu::VertexAttribute {
                 offset: 0,
                 shader_location: 0,
-                format: wgpu::VertexFormat::Float32x3,
+                format: wgpu::VertexFormat::Float32x4,
             }],
         };
 
+        // Compute pipelines.
+        let (calculate_massive_positions_pipeline, calculate_massive_positions_bind_group) =
+            create_calculate_massive_positions_pipeline_and_bind_group(
+                &device,
+                &massive_positions_and_masses_buffer,
+            );
         // Render pipeline.
-        let shader = device.create_shader_module(wgpu::include_wgsl!("shader.wgsl"));
+        let render_shader = device.create_shader_module(wgpu::include_wgsl!("render.wgsl"));
         let render_pipeline_layout =
             device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
                 label: Some("Render Pipeline Layout"),
@@ -111,12 +124,12 @@ impl State {
             label: Some("Render Pipeline"),
             layout: Some(&render_pipeline_layout),
             vertex: wgpu::VertexState {
-                module: &shader,
+                module: &render_shader,
                 entry_point: "vs_main",
-                buffers: &[massive_positions_buffer_layout],
+                buffers: &[massive_positions_and_masses_buffer_layout],
             },
             fragment: Some(wgpu::FragmentState {
-                module: &shader,
+                module: &render_shader,
                 entry_point: "fs_main",
                 targets: &[Some(wgpu::ColorTargetState {
                     format: config.format,
@@ -143,15 +156,17 @@ impl State {
         });
 
         Self {
-            num_particles,
+            num_massive_particles,
             surface,
             device,
             queue,
             config,
             size,
             window,
-            massive_positions_buffer,
+            massive_positions_and_masses_buffer,
             render_pipeline,
+            calculate_massive_positions_pipeline,
+            calculate_massive_positions_bind_group,
         }
     }
 
@@ -192,6 +207,14 @@ impl State {
             });
 
         {
+            let mut compute_pass = encoder.begin_compute_pass(&wgpu::ComputePassDescriptor {
+                label: Some("N-Body - Calculate Massive Positions"),
+            });
+            compute_pass.set_bind_group(0, &self.calculate_massive_positions_bind_group, &[]);
+            compute_pass.set_pipeline(&self.calculate_massive_positions_pipeline);
+            compute_pass.dispatch_workgroups(self.num_massive_particles as u32, 1, 1);
+        }
+        {
             let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                 label: Some("Render Pass"),
                 color_attachments: &[Some(wgpu::RenderPassColorAttachment {
@@ -211,8 +234,8 @@ impl State {
             });
 
             render_pass.set_pipeline(&self.render_pipeline);
-            render_pass.set_vertex_buffer(0, self.massive_positions_buffer.slice(..));
-            render_pass.draw(0..self.num_particles, 0..1);
+            render_pass.set_vertex_buffer(0, self.massive_positions_and_masses_buffer.slice(..));
+            render_pass.draw(0..self.num_massive_particles, 0..1);
         }
 
         self.queue.submit(std::iter::once(encoder.finish()));
@@ -220,4 +243,54 @@ impl State {
 
         Ok(())
     }
+}
+
+fn create_calculate_massive_positions_pipeline_and_bind_group(
+    device: &wgpu::Device,
+    massive_positions: &wgpu::Buffer,
+) -> (wgpu::ComputePipeline, wgpu::BindGroup) {
+    let shader_source = include_str!("calculate_massive_positions.wgsl");
+
+    let bind_group_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+        label: Some("N-Body - Calculate Massive Positions - Bind Group Layout"),
+        entries: &[wgpu::BindGroupLayoutEntry {
+            binding: 0,
+            visibility: wgpu::ShaderStages::COMPUTE,
+            ty: wgpu::BindingType::Buffer {
+                ty: wgpu::BufferBindingType::Storage { read_only: false },
+                min_binding_size: None,
+                has_dynamic_offset: false,
+            },
+            count: None,
+        }],
+    });
+
+    let shader_module = device.create_shader_module(wgpu::ShaderModuleDescriptor {
+        label: Some("N-Body - Render Massive Positions - Shader Module"),
+        source: wgpu::ShaderSource::Wgsl(shader_source.into()),
+    });
+
+    let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+        label: Some("N-Body - Render Massive Positions - Pipeline Layout"),
+        bind_group_layouts: &[&bind_group_layout],
+        push_constant_ranges: &[],
+    });
+
+    let pipeline = device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
+        label: Some("N-Body - Render Massive Positions - Pipeline"),
+        layout: Some(&pipeline_layout),
+        module: &shader_module,
+        entry_point: "main",
+    });
+
+    let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+        label: Some("N-Body - Calculate Massive Velocities - Bind Group"),
+        layout: &pipeline.get_bind_group_layout(0),
+        entries: &[wgpu::BindGroupEntry {
+            binding: 0,
+            resource: massive_positions.as_entire_binding(),
+        }],
+    });
+
+    (pipeline, bind_group)
 }
