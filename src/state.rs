@@ -1,6 +1,12 @@
+use bytemuck;
+use wgpu::util::DeviceExt;
 use winit::{event::WindowEvent, window::Window};
 
+use crate::NBody;
+
 pub struct State {
+    num_particles: u32,
+
     surface: wgpu::Surface,
     device: wgpu::Device,
     queue: wgpu::Queue,
@@ -9,10 +15,12 @@ pub struct State {
     window: Window,
 
     render_pipeline: wgpu::RenderPipeline,
+
+    massive_positions_buffer: wgpu::Buffer,
 }
 
 impl State {
-    pub async fn new(window: Window) -> Self {
+    pub async fn new(window: Window, nbody: NBody) -> Self {
         // Window size.
         let size = window.inner_size();
 
@@ -71,6 +79,25 @@ impl State {
         };
         surface.configure(&device, &config);
 
+        // Vertex buffer.
+        let num_particles = nbody.num_massive_particles() as u32;
+        let massive_positions_buffer =
+            device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                label: Some("Vertex Buffer"),
+                contents: bytemuck::cast_slice(nbody.massive_positions()),
+                usage: wgpu::BufferUsages::VERTEX,
+            });
+
+        let massive_positions_buffer_layout = wgpu::VertexBufferLayout {
+            array_stride: 3 * std::mem::size_of::<f32>() as wgpu::BufferAddress,
+            step_mode: wgpu::VertexStepMode::Vertex,
+            attributes: &[wgpu::VertexAttribute {
+                offset: 0,
+                shader_location: 0,
+                format: wgpu::VertexFormat::Float32x3,
+            }],
+        };
+
         // Render pipeline.
         let shader = device.create_shader_module(wgpu::include_wgsl!("shader.wgsl"));
         let render_pipeline_layout =
@@ -86,7 +113,7 @@ impl State {
             vertex: wgpu::VertexState {
                 module: &shader,
                 entry_point: "vs_main",
-                buffers: &[],
+                buffers: &[massive_positions_buffer_layout],
             },
             fragment: Some(wgpu::FragmentState {
                 module: &shader,
@@ -116,12 +143,14 @@ impl State {
         });
 
         Self {
+            num_particles,
             surface,
             device,
             queue,
             config,
             size,
             window,
+            massive_positions_buffer,
             render_pipeline,
         }
     }
@@ -182,7 +211,8 @@ impl State {
             });
 
             render_pass.set_pipeline(&self.render_pipeline);
-            render_pass.draw(0..3, 0..1);
+            render_pass.set_vertex_buffer(0, self.massive_positions_buffer.slice(..));
+            render_pass.draw(0..self.num_particles, 0..1);
         }
 
         self.queue.submit(std::iter::once(encoder.finish()));

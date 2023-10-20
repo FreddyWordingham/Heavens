@@ -1,3 +1,4 @@
+mod nbody;
 mod state;
 
 use log;
@@ -6,15 +7,26 @@ use wasm_bindgen::prelude::*;
 use winit::{
     event::{ElementState, Event, KeyboardInput, VirtualKeyCode, WindowEvent},
     event_loop::{ControlFlow, EventLoop},
-    window::{Window, WindowBuilder},
+    window::WindowBuilder,
 };
 
+use crate::nbody::NBody;
 use crate::state::State;
 
 #[cfg_attr(target_arch = "wasm32", wasm_bindgen(start))]
 pub async fn run() {
-    let width = 800;
-    let height = 600;
+    let mut nbody = NBody::new();
+    nbody.add_massive_particle([0.2, 0.0, 0.0]);
+    nbody.add_massive_particle([0.0, 0.0, 0.0]);
+    nbody.add_massive_particle([0.0, 0.01, 0.0]);
+    nbody.add_massive_particle([0.0, 0.001, 0.0]);
+    nbody.add_massive_particle([-0.5, -0.5, 0.0]);
+    nbody.add_massive_particle([0.5, -0.5, 0.0]);
+    nbody.add_massive_particle([0.0, 0.0, 0.0]);
+    nbody.add_massive_particle([0.1, 0.0, 0.0]);
+    nbody.add_massive_particle([0.2, 0.0, 0.0]);
+    nbody.add_massive_particle([0.3, 0.0, 0.0]);
+    nbody.add_massive_particle([0.4, 0.0, 0.0]);
 
     cfg_if::cfg_if! {
         if #[cfg(target_arch = "wasm32")] {
@@ -30,6 +42,9 @@ pub async fn run() {
 
     #[cfg(target_arch = "wasm32")]
     {
+        let width = 800;
+        let height = 600;
+
         // Winit prevents sizing with CSS, so we have to set
         // the size manually when on web.
         use winit::dpi::PhysicalSize;
@@ -47,7 +62,7 @@ pub async fn run() {
             .expect("Couldn't append canvas to document body.");
     }
 
-    let mut state = State::new(window).await;
+    let mut state = State::new(window, nbody).await;
 
     event_loop.run(move |event, _, control_flow| {
         // control_flow.set_poll(); // Continuously runs the event loop
