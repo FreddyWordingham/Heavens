@@ -13,6 +13,7 @@ use winit::{
 use crate::nbody::NBody;
 use crate::state::State;
 
+// lib.rs
 #[cfg_attr(target_arch = "wasm32", wasm_bindgen(start))]
 pub async fn run() {
     let mut nbody = NBody::new();

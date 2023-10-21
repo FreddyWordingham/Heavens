@@ -4,6 +4,28 @@ use winit::{event::WindowEvent, window::Window};
 
 use crate::NBody;
 
+#[repr(C)]
+#[derive(Copy, Clone, Debug)]
+struct Vertex {
+    position: [f32; 3],
+    color: [f32; 3],
+}
+
+const VERTICES: &[Vertex] = &[
+    Vertex {
+        position: [0.0, 0.5, 0.0],
+        color: [1.0, 0.0, 0.0],
+    },
+    Vertex {
+        position: [-0.5, -0.5, 0.0],
+        color: [0.0, 1.0, 0.0],
+    },
+    Vertex {
+        position: [0.5, -0.5, 0.0],
+        color: [0.0, 0.0, 1.0],
+    },
+];
+
 pub struct State {
     // Hardware and window
     surface: wgpu::Surface,
@@ -18,7 +40,7 @@ pub struct State {
     massive_positions_and_masses_buffer: wgpu::Buffer,
 
     // Render pipeline
-    render_pipeline: wgpu::RenderPipeline,
+    render_massive_positions_pipeline: wgpu::RenderPipeline,
 
     // Compute pipelines
     calculate_massive_positions_pipeline: wgpu::ComputePipeline,
@@ -85,7 +107,7 @@ impl State {
         };
         surface.configure(&device, &config);
 
-        // Vertex buffer.
+        // Massive positions and masses.
         let num_massive_particles = nbody.num_massive_particles() as u32;
         let data: Vec<[f32; 4]> = nbody
             .massive_positions()
@@ -115,50 +137,14 @@ impl State {
                 &device,
                 &massive_positions_and_masses_buffer,
             );
-        // Render pipeline.
-        let render_shader =
-            device.create_shader_module(wgpu::include_wgsl!("render_massive_positions.wgsl"));
-        let render_pipeline_layout =
-            device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
-                label: Some("Render Pipeline Layout"),
-                bind_group_layouts: &[],
-                push_constant_ranges: &[],
-            });
 
-        let render_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
-            label: Some("Render Pipeline"),
-            layout: Some(&render_pipeline_layout),
-            vertex: wgpu::VertexState {
-                module: &render_shader,
-                entry_point: "vs_main",
-                buffers: &[massive_positions_and_masses_buffer_layout],
-            },
-            fragment: Some(wgpu::FragmentState {
-                module: &render_shader,
-                entry_point: "fs_main",
-                targets: &[Some(wgpu::ColorTargetState {
-                    format: config.format,
-                    blend: Some(wgpu::BlendState::REPLACE),
-                    write_mask: wgpu::ColorWrites::ALL,
-                })],
-            }),
-            primitive: wgpu::PrimitiveState {
-                topology: wgpu::PrimitiveTopology::PointList,
-                strip_index_format: None,
-                front_face: wgpu::FrontFace::Ccw,
-                cull_mode: Some(wgpu::Face::Back),
-                polygon_mode: wgpu::PolygonMode::Fill,
-                unclipped_depth: false,
-                conservative: false,
-            },
-            depth_stencil: None,
-            multisample: wgpu::MultisampleState {
-                count: 1,
-                mask: !0,
-                alpha_to_coverage_enabled: false,
-            },
-            multiview: None,
-        });
+        // Render pipeline.
+        let render_massive_positions_pipeline =
+            create_render_massive_positions_pipeline_and_bind_group(
+                &device,
+                &config,
+                massive_positions_and_masses_buffer_layout,
+            );
 
         Self {
             num_massive_particles,
@@ -169,7 +155,7 @@ impl State {
             size,
             window,
             massive_positions_and_masses_buffer,
-            render_pipeline,
+            render_massive_positions_pipeline,
             calculate_massive_positions_pipeline,
             calculate_massive_positions_bind_group,
         }
@@ -238,7 +224,7 @@ impl State {
                 depth_stencil_attachment: None,
             });
 
-            render_pass.set_pipeline(&self.render_pipeline);
+            render_pass.set_pipeline(&self.render_massive_positions_pipeline);
             render_pass.set_vertex_buffer(0, self.massive_positions_and_masses_buffer.slice(..));
             render_pass.draw(0..self.num_massive_particles, 0..1);
         }
@@ -252,7 +238,7 @@ impl State {
 
 fn create_calculate_massive_positions_pipeline_and_bind_group(
     device: &wgpu::Device,
-    massive_positions: &wgpu::Buffer,
+    massive_positions_and_masses_buffer: &wgpu::Buffer,
 ) -> (wgpu::ComputePipeline, wgpu::BindGroup) {
     let shader_source = include_str!("calculate_massive_positions.wgsl");
 
@@ -293,9 +279,61 @@ fn create_calculate_massive_positions_pipeline_and_bind_group(
         layout: &pipeline.get_bind_group_layout(0),
         entries: &[wgpu::BindGroupEntry {
             binding: 0,
-            resource: massive_positions.as_entire_binding(),
+            resource: massive_positions_and_masses_buffer.as_entire_binding(),
         }],
     });
 
     (pipeline, bind_group)
+}
+
+fn create_render_massive_positions_pipeline_and_bind_group(
+    device: &wgpu::Device,
+    config: &wgpu::SurfaceConfiguration,
+    massive_positions_and_masses_buffer_layout: wgpu::VertexBufferLayout,
+) -> wgpu::RenderPipeline {
+    let render_shader =
+        device.create_shader_module(wgpu::include_wgsl!("render_massive_positions.wgsl"));
+
+    let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+        label: Some("Render Pipeline Layout"),
+        bind_group_layouts: &[],
+        push_constant_ranges: &[],
+    });
+
+    let pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+        label: Some("Render Pipeline"),
+        layout: Some(&pipeline_layout),
+        vertex: wgpu::VertexState {
+            module: &render_shader,
+            entry_point: "vs_main",
+            buffers: &[massive_positions_and_masses_buffer_layout],
+        },
+        fragment: Some(wgpu::FragmentState {
+            module: &render_shader,
+            entry_point: "fs_main",
+            targets: &[Some(wgpu::ColorTargetState {
+                format: config.format,
+                blend: Some(wgpu::BlendState::REPLACE),
+                write_mask: wgpu::ColorWrites::ALL,
+            })],
+        }),
+        primitive: wgpu::PrimitiveState {
+            topology: wgpu::PrimitiveTopology::PointList,
+            strip_index_format: None,
+            front_face: wgpu::FrontFace::Ccw,
+            cull_mode: Some(wgpu::Face::Back),
+            polygon_mode: wgpu::PolygonMode::Fill,
+            unclipped_depth: false,
+            conservative: false,
+        },
+        depth_stencil: None,
+        multisample: wgpu::MultisampleState {
+            count: 1,
+            mask: !0,
+            alpha_to_coverage_enabled: false,
+        },
+        multiview: None,
+    });
+
+    pipeline
 }
