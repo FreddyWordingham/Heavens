@@ -1,6 +1,6 @@
 // Vertex shader
 struct VertexInput {
-    @location(0) position: vec4<f32>,
+    @location(0) position_and_mass: vec4<f32>,
 };
 
 struct VertexOutput {
@@ -11,8 +11,9 @@ struct VertexOutput {
 @vertex
 fn vs_main(particle: VertexInput) -> VertexOutput {
     var out: VertexOutput;
-    out.clip_position = vec4<f32>(particle.position.x, particle.position.y, particle.position.z, 1.0);
-    // out.clip_position = vec4<f32>(0.0, 0.0, 0.0, 1.0);
+    var position = vec3<f32>(particle.position_and_mass.x, particle.position_and_mass.y, particle.position_and_mass.z);
+    var mass = particle.position_and_mass.w;
+    out.clip_position = vec4<f32>(position.x, position.y, position.z, 1.0);
     out.colour = vec3<f32>(1.0, 1.0, 1.0);
     return out;
 }

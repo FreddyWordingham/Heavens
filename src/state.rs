@@ -5,6 +5,7 @@ use winit::{event::WindowEvent, window::Window};
 use crate::NBody;
 
 pub struct State {
+    // Hardware and window
     surface: wgpu::Surface,
     device: wgpu::Device,
     queue: wgpu::Queue,
@@ -12,11 +13,14 @@ pub struct State {
     size: winit::dpi::PhysicalSize<u32>,
     window: Window,
 
+    // Buffers
     num_massive_particles: u32,
     massive_positions_and_masses_buffer: wgpu::Buffer,
 
+    // Render pipeline
     render_pipeline: wgpu::RenderPipeline,
 
+    // Compute pipelines
     calculate_massive_positions_pipeline: wgpu::ComputePipeline,
     calculate_massive_positions_bind_group: wgpu::BindGroup,
 }
@@ -112,7 +116,8 @@ impl State {
                 &massive_positions_and_masses_buffer,
             );
         // Render pipeline.
-        let render_shader = device.create_shader_module(wgpu::include_wgsl!("render.wgsl"));
+        let render_shader =
+            device.create_shader_module(wgpu::include_wgsl!("render_massive_positions.wgsl"));
         let render_pipeline_layout =
             device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
                 label: Some("Render Pipeline Layout"),
