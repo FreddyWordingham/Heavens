@@ -35,12 +35,62 @@ impl Simulation {
         false
     }
 
-    pub fn update(&mut self) {}
+    pub fn update(&mut self) {
+        let mut encoder =
+            self.hardware
+                .device
+                .create_command_encoder(&wgpu::CommandEncoderDescriptor {
+                    label: Some("Compute Encoder"),
+                });
+
+        {
+            let mut compute_pass = encoder.begin_compute_pass(&wgpu::ComputePassDescriptor {
+                label: Some("Calculate Massive Forces"),
+            });
+            compute_pass.set_bind_group(
+                0,
+                &self.pipelines.calculate_massive_forces_bind_group,
+                &[],
+            );
+            compute_pass.set_pipeline(&self.pipelines.calculate_massive_forces_pipeline);
+            compute_pass.dispatch_workgroups((self.memory.num_massive_particles / 64) as u32, 1, 1);
+        }
+
+        {
+            let mut compute_pass = encoder.begin_compute_pass(&wgpu::ComputePassDescriptor {
+                label: Some("Calculate Massive Velocities"),
+            });
+            compute_pass.set_bind_group(
+                0,
+                &self.pipelines.calculate_massive_velocities_bind_group,
+                &[],
+            );
+            compute_pass.set_pipeline(&self.pipelines.calculate_massive_velocities_pipeline);
+            compute_pass.dispatch_workgroups((self.memory.num_massive_particles / 64) as u32, 1, 1);
+        }
+
+        {
+            let mut compute_pass = encoder.begin_compute_pass(&wgpu::ComputePassDescriptor {
+                label: Some("Calculate Massive Positions"),
+            });
+            compute_pass.set_bind_group(
+                0,
+                &self.pipelines.calculate_massive_positions_bind_group,
+                &[],
+            );
+            compute_pass.set_pipeline(&self.pipelines.calculate_massive_positions_pipeline);
+            compute_pass.dispatch_workgroups((self.memory.num_massive_particles / 64) as u32, 1, 1);
+        }
+
+        self.hardware
+            .queue
+            .submit(std::iter::once(encoder.finish()));
+    }
 
     pub fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
         let output = self.hardware.surface.get_current_texture()?;
 
-        let view = output
+        let screen_view = output
             .texture
             .create_view(&wgpu::TextureViewDescriptor::default());
 
@@ -52,6 +102,26 @@ impl Simulation {
                 });
 
         {
+            encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+                label: Some("Clear Texture"),
+                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+                    view: &self.memory.display_view,
+                    resolve_target: None,
+                    ops: wgpu::Operations {
+                        load: wgpu::LoadOp::Clear(wgpu::Color {
+                            r: 0.0,
+                            g: 0.0,
+                            b: 0.0,
+                            a: 1.0,
+                        }),
+                        store: true,
+                    },
+                })],
+                depth_stencil_attachment: None,
+            });
+        }
+
+        {
             let mut compute_pass = encoder.begin_compute_pass(&wgpu::ComputePassDescriptor {
                 label: Some("Render Massive Particles"),
             });
@@ -61,14 +131,14 @@ impl Simulation {
                 &[],
             );
             compute_pass.set_pipeline(&self.pipelines.render_massive_particles_pipeline);
-            compute_pass.dispatch_workgroups(self.memory.num_massive_particles as u32, 1, 1);
+            compute_pass.dispatch_workgroups((self.memory.num_massive_particles / 64) as u32, 1, 1);
         }
 
         {
             let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                 label: Some("Render Pass"),
                 color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-                    view: &view,
+                    view: &screen_view,
                     resolve_target: None,
                     ops: wgpu::Operations {
                         load: wgpu::LoadOp::Clear(wgpu::Color {

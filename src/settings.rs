@@ -9,8 +9,6 @@ pub struct Settings {
     pub gravitational_constant: f32,
     pub time_step: f32,
     pub smoothing_length: f32,
-
-    _placeholders: [f32; 11],
 }
 
 impl Settings {
@@ -22,22 +20,5 @@ impl Settings {
             && self.gravitational_constant > 0.0
             && self.time_step > 0.0
             && self.smoothing_length > 0.0
-    }
-}
-
-impl Default for Settings {
-    fn default() -> Self {
-        Self {
-            display_width: 1024.0,
-            display_height: 512.0,
-            pixel_size: 2.0,
-            zoom: 10.0,
-
-            gravitational_constant: 1.0,
-            time_step: 1.0,
-            smoothing_length: 1.0e-3,
-
-            _placeholders: [0.0; 11],
-        }
     }
 }

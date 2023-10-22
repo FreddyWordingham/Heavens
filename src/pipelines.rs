@@ -10,6 +10,18 @@ pub struct Pipelines {
     // Render massive particles
     pub render_massive_particles_pipeline: wgpu::ComputePipeline,
     pub render_massive_particles_bind_group: wgpu::BindGroup,
+
+    // Calculate massive forces
+    pub calculate_massive_forces_pipeline: wgpu::ComputePipeline,
+    pub calculate_massive_forces_bind_group: wgpu::BindGroup,
+
+    // Calculate massive velocities
+    pub calculate_massive_velocities_pipeline: wgpu::ComputePipeline,
+    pub calculate_massive_velocities_bind_group: wgpu::BindGroup,
+
+    // Calculate massive positions
+    pub calculate_massive_positions_pipeline: wgpu::ComputePipeline,
+    pub calculate_massive_positions_bind_group: wgpu::BindGroup,
 }
 
 impl Pipelines {
@@ -20,11 +32,26 @@ impl Pipelines {
         let (render_massive_particles_pipeline, render_massive_particles_bind_group) =
             Self::init_render_massive_particles_pipeline_and_bind_group(hardware, memory);
 
+        let (calculate_massive_forces_pipeline, calculate_massive_forces_bind_group) =
+            Self::init_calculate_massive_forces_pipeline_and_bind_group(hardware, memory);
+
+        let (calculate_massive_velocities_pipeline, calculate_massive_velocities_bind_group) =
+            Self::init_calculate_massive_velocities_pipeline_and_bind_group(hardware, memory);
+
+        let (calculate_massive_positions_pipeline, calculate_massive_positions_bind_group) =
+            Self::init_calculate_massive_positions_pipeline_and_bind_group(hardware, memory);
+
         Self {
             display_bind_group,
             display_pipeline,
             render_massive_particles_pipeline,
             render_massive_particles_bind_group,
+            calculate_massive_forces_pipeline,
+            calculate_massive_forces_bind_group,
+            calculate_massive_velocities_pipeline,
+            calculate_massive_velocities_bind_group,
+            calculate_massive_positions_pipeline,
+            calculate_massive_positions_bind_group,
         }
     }
 
@@ -223,6 +250,293 @@ impl Pipelines {
                     wgpu::BindGroupEntry {
                         binding: 2,
                         resource: wgpu::BindingResource::TextureView(&memory.display_view),
+                    },
+                ],
+            });
+
+        (pipeline, bind_group)
+    }
+
+    fn init_calculate_massive_forces_pipeline_and_bind_group(
+        hardware: &Hardware,
+        memory: &Memory,
+    ) -> (ComputePipeline, BindGroup) {
+        let shader_source = include_str!("shaders/calculate_massive_forces.wgsl");
+        let shader_module = hardware
+            .device
+            .create_shader_module(wgpu::ShaderModuleDescriptor {
+                label: Some("Calculate Massive Forces - Shader Module"),
+                source: wgpu::ShaderSource::Wgsl(shader_source.into()),
+            });
+
+        let bind_group_layout =
+            hardware
+                .device
+                .create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+                    label: Some("Calculate Massive Forces - Bind Group Layout"),
+                    entries: &[
+                        wgpu::BindGroupLayoutEntry {
+                            binding: 0,
+                            visibility: wgpu::ShaderStages::COMPUTE,
+                            ty: wgpu::BindingType::Buffer {
+                                ty: wgpu::BufferBindingType::Uniform,
+                                min_binding_size: None,
+                                has_dynamic_offset: false,
+                            },
+                            count: None,
+                        },
+                        wgpu::BindGroupLayoutEntry {
+                            binding: 1,
+                            visibility: wgpu::ShaderStages::COMPUTE,
+                            ty: wgpu::BindingType::Buffer {
+                                ty: wgpu::BufferBindingType::Storage { read_only: true },
+                                min_binding_size: None,
+                                has_dynamic_offset: false,
+                            },
+                            count: None,
+                        },
+                        wgpu::BindGroupLayoutEntry {
+                            binding: 2,
+                            visibility: wgpu::ShaderStages::COMPUTE,
+                            ty: wgpu::BindingType::Buffer {
+                                ty: wgpu::BufferBindingType::Storage { read_only: false },
+                                min_binding_size: None,
+                                has_dynamic_offset: false,
+                            },
+                            count: None,
+                        },
+                    ],
+                });
+
+        let pipeline_layout =
+            hardware
+                .device
+                .create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+                    label: Some("Calculate Massive Forces - Pipeline Layout"),
+                    bind_group_layouts: &[&bind_group_layout],
+                    push_constant_ranges: &[],
+                });
+
+        let pipeline = hardware
+            .device
+            .create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
+                label: Some("Calculate Massive Forces - Pipeline"),
+                layout: Some(&pipeline_layout),
+                module: &shader_module,
+                entry_point: "main",
+            });
+
+        let bind_group = hardware
+            .device
+            .create_bind_group(&wgpu::BindGroupDescriptor {
+                label: Some("Calculate Massive Forces - Bind Group"),
+                layout: &pipeline.get_bind_group_layout(0),
+                entries: &[
+                    wgpu::BindGroupEntry {
+                        binding: 0,
+                        resource: memory.settings_uniform.as_entire_binding(),
+                    },
+                    wgpu::BindGroupEntry {
+                        binding: 1,
+                        resource: memory
+                            .massive_positions_and_masses_buffer
+                            .as_entire_binding(),
+                    },
+                    wgpu::BindGroupEntry {
+                        binding: 2,
+                        resource: memory.massive_forces_and_masses_buffer.as_entire_binding(),
+                    },
+                ],
+            });
+
+        (pipeline, bind_group)
+    }
+
+    fn init_calculate_massive_velocities_pipeline_and_bind_group(
+        hardware: &Hardware,
+        memory: &Memory,
+    ) -> (ComputePipeline, BindGroup) {
+        let shader_source = include_str!("shaders/calculate_massive_velocities.wgsl");
+        let shader_module = hardware
+            .device
+            .create_shader_module(wgpu::ShaderModuleDescriptor {
+                label: Some("Calculate Massive Velocities - Shader Module"),
+                source: wgpu::ShaderSource::Wgsl(shader_source.into()),
+            });
+
+        let bind_group_layout =
+            hardware
+                .device
+                .create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+                    label: Some("Calculate Massive Velocities - Bind Group Layout"),
+                    entries: &[
+                        wgpu::BindGroupLayoutEntry {
+                            binding: 0,
+                            visibility: wgpu::ShaderStages::COMPUTE,
+                            ty: wgpu::BindingType::Buffer {
+                                ty: wgpu::BufferBindingType::Uniform,
+                                min_binding_size: None,
+                                has_dynamic_offset: false,
+                            },
+                            count: None,
+                        },
+                        wgpu::BindGroupLayoutEntry {
+                            binding: 1,
+                            visibility: wgpu::ShaderStages::COMPUTE,
+                            ty: wgpu::BindingType::Buffer {
+                                ty: wgpu::BufferBindingType::Storage { read_only: true },
+                                min_binding_size: None,
+                                has_dynamic_offset: false,
+                            },
+                            count: None,
+                        },
+                        wgpu::BindGroupLayoutEntry {
+                            binding: 2,
+                            visibility: wgpu::ShaderStages::COMPUTE,
+                            ty: wgpu::BindingType::Buffer {
+                                ty: wgpu::BufferBindingType::Storage { read_only: false },
+                                min_binding_size: None,
+                                has_dynamic_offset: false,
+                            },
+                            count: None,
+                        },
+                    ],
+                });
+
+        let pipeline_layout =
+            hardware
+                .device
+                .create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+                    label: Some("Calculate Massive Velocities - Pipeline Layout"),
+                    bind_group_layouts: &[&bind_group_layout],
+                    push_constant_ranges: &[],
+                });
+
+        let pipeline = hardware
+            .device
+            .create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
+                label: Some("Calculate Massive Velocities - Pipeline"),
+                layout: Some(&pipeline_layout),
+                module: &shader_module,
+                entry_point: "main",
+            });
+
+        let bind_group = hardware
+            .device
+            .create_bind_group(&wgpu::BindGroupDescriptor {
+                label: Some("Calculate Massive Velocities - Bind Group"),
+                layout: &pipeline.get_bind_group_layout(0),
+                entries: &[
+                    wgpu::BindGroupEntry {
+                        binding: 0,
+                        resource: memory.settings_uniform.as_entire_binding(),
+                    },
+                    wgpu::BindGroupEntry {
+                        binding: 1,
+                        resource: memory.massive_forces_and_masses_buffer.as_entire_binding(),
+                    },
+                    wgpu::BindGroupEntry {
+                        binding: 2,
+                        resource: memory
+                            .massive_velocities_and_masses_buffer
+                            .as_entire_binding(),
+                    },
+                ],
+            });
+
+        (pipeline, bind_group)
+    }
+
+    fn init_calculate_massive_positions_pipeline_and_bind_group(
+        hardware: &Hardware,
+        memory: &Memory,
+    ) -> (ComputePipeline, BindGroup) {
+        let shader_source = include_str!("shaders/calculate_massive_positions.wgsl");
+        let shader_module = hardware
+            .device
+            .create_shader_module(wgpu::ShaderModuleDescriptor {
+                label: Some("Calculate Massive Positions - Shader Module"),
+                source: wgpu::ShaderSource::Wgsl(shader_source.into()),
+            });
+
+        let bind_group_layout =
+            hardware
+                .device
+                .create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+                    label: Some("Calculate Massive Positions - Bind Group Layout"),
+                    entries: &[
+                        wgpu::BindGroupLayoutEntry {
+                            binding: 0,
+                            visibility: wgpu::ShaderStages::COMPUTE,
+                            ty: wgpu::BindingType::Buffer {
+                                ty: wgpu::BufferBindingType::Uniform,
+                                min_binding_size: None,
+                                has_dynamic_offset: false,
+                            },
+                            count: None,
+                        },
+                        wgpu::BindGroupLayoutEntry {
+                            binding: 1,
+                            visibility: wgpu::ShaderStages::COMPUTE,
+                            ty: wgpu::BindingType::Buffer {
+                                ty: wgpu::BufferBindingType::Storage { read_only: true },
+                                min_binding_size: None,
+                                has_dynamic_offset: false,
+                            },
+                            count: None,
+                        },
+                        wgpu::BindGroupLayoutEntry {
+                            binding: 2,
+                            visibility: wgpu::ShaderStages::COMPUTE,
+                            ty: wgpu::BindingType::Buffer {
+                                ty: wgpu::BufferBindingType::Storage { read_only: false },
+                                min_binding_size: None,
+                                has_dynamic_offset: false,
+                            },
+                            count: None,
+                        },
+                    ],
+                });
+
+        let pipeline_layout =
+            hardware
+                .device
+                .create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+                    label: Some("Calculate Massive Positions - Pipeline Layout"),
+                    bind_group_layouts: &[&bind_group_layout],
+                    push_constant_ranges: &[],
+                });
+
+        let pipeline = hardware
+            .device
+            .create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
+                label: Some("Calculate Massive Positions - Pipeline"),
+                layout: Some(&pipeline_layout),
+                module: &shader_module,
+                entry_point: "main",
+            });
+
+        let bind_group = hardware
+            .device
+            .create_bind_group(&wgpu::BindGroupDescriptor {
+                label: Some("Calculate Massive Positions - Bind Group"),
+                layout: &pipeline.get_bind_group_layout(0),
+                entries: &[
+                    wgpu::BindGroupEntry {
+                        binding: 0,
+                        resource: memory.settings_uniform.as_entire_binding(),
+                    },
+                    wgpu::BindGroupEntry {
+                        binding: 1,
+                        resource: memory
+                            .massive_velocities_and_masses_buffer
+                            .as_entire_binding(),
+                    },
+                    wgpu::BindGroupEntry {
+                        binding: 2,
+                        resource: memory
+                            .massive_positions_and_masses_buffer
+                            .as_entire_binding(),
                     },
                 ],
             });

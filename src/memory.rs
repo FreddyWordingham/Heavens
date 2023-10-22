@@ -43,6 +43,8 @@ pub struct Memory {
 
     // Particles
     pub massive_positions_and_masses_buffer: wgpu::Buffer,
+    pub massive_velocities_and_masses_buffer: wgpu::Buffer,
+    pub massive_forces_and_masses_buffer: wgpu::Buffer,
 
     // Textures
     pub display_texture: wgpu::Texture,
@@ -56,10 +58,8 @@ pub struct Memory {
 
 impl<'a> Memory {
     pub fn new(settings: Settings, initial_conditions: NBody, device: &wgpu::Device) -> Self {
+        debug_assert!(settings.is_valid());
         debug_assert!(initial_conditions.is_valid());
-
-        // Settings
-        println!("Settings: {:?}", settings);
 
         let settings_uniform = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("Settings Uniform"),
@@ -77,11 +77,39 @@ impl<'a> Memory {
 
         // Particle data
         let num_massive_particles = initial_conditions.num_massive_particles() as u32;
-        let massive_positions_and_masses_buffer = Self::init_massive_positions_and_masses(
-            device,
-            &initial_conditions.massive_positions(),
-            &initial_conditions.massive_masses(),
-        );
+        let init_massive_positions_and_masses_data = initial_conditions
+            .massive_positions()
+            .iter()
+            .zip(initial_conditions.massive_masses().iter())
+            .map(|([px, py, pz], mass)| [*px, *py, *pz, *mass])
+            .flatten()
+            .collect::<Vec<f32>>();
+        let massive_positions_and_masses_buffer =
+            device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                label: Some("Positions and Masses Buffer"),
+                contents: bytemuck::cast_slice(&init_massive_positions_and_masses_data),
+                usage: wgpu::BufferUsages::STORAGE,
+            });
+        let init_massive_velocities_and_masses_data = initial_conditions
+            .massive_velocities()
+            .iter()
+            .zip(initial_conditions.massive_masses().iter())
+            .map(|([vx, vy, vz], mass)| [*vx, *vy, *vz, *mass])
+            .flatten()
+            .collect::<Vec<f32>>();
+        let massive_velocities_and_masses_buffer =
+            device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                label: Some("Velocities and Masses Buffer"),
+                contents: bytemuck::cast_slice(&init_massive_velocities_and_masses_data),
+                usage: wgpu::BufferUsages::STORAGE,
+            });
+        let init_massive_forces_and_masses_data = vec![0.0; (num_massive_particles * 4) as usize];
+        let massive_forces_and_masses_buffer =
+            device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                label: Some("Forces and Masses Buffer"),
+                contents: bytemuck::cast_slice(&init_massive_forces_and_masses_data),
+                usage: wgpu::BufferUsages::STORAGE,
+            });
 
         // Display texture
         let texture_size = wgpu::Extent3d {
@@ -97,7 +125,8 @@ impl<'a> Memory {
             format: wgpu::TextureFormat::Rgba8Unorm,
             usage: wgpu::TextureUsages::TEXTURE_BINDING
                 | wgpu::TextureUsages::COPY_DST
-                | wgpu::TextureUsages::STORAGE_BINDING,
+                | wgpu::TextureUsages::STORAGE_BINDING
+                | wgpu::TextureUsages::RENDER_ATTACHMENT,
             label: Some("Display Texture"),
             view_formats: &[],
         });
@@ -131,32 +160,13 @@ impl<'a> Memory {
             num_indices,
             settings_uniform,
             massive_positions_and_masses_buffer,
+            massive_velocities_and_masses_buffer,
+            massive_forces_and_masses_buffer,
             display_texture,
             display_view,
             display_sampler,
             vertex_buffer,
             index_buffer,
         }
-    }
-
-    fn init_massive_positions_and_masses(
-        device: &'a wgpu::Device,
-        positions: &[[f32; 3]],
-        masses: &[f32],
-    ) -> wgpu::Buffer {
-        let data = positions
-            .iter()
-            .zip(masses.iter())
-            .map(|([px, py, pz], mass)| [*px, *py, *pz, *mass])
-            .flatten()
-            .collect::<Vec<f32>>();
-
-        let buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some("Vertex Buffer"),
-            contents: bytemuck::cast_slice(&data),
-            usage: wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::STORAGE,
-        });
-
-        buffer
     }
 }

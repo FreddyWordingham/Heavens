@@ -9,7 +9,6 @@ struct Settings {
     smoothing_length: f32,
 };
 
-
 @group(0)
 @binding(0)
 var<uniform> settings: Settings;
@@ -23,7 +22,7 @@ var<storage, read> massive_positions_and_masses: array<vec4<f32>>;
 var texture: texture_storage_2d<rgba8unorm, read_write>;
 
 @compute
-@workgroup_size(1, 1, 1)
+@workgroup_size(64, 1, 1)
 fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
     let n = global_id.x;
 
@@ -36,8 +35,8 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
     textureStore(texture, pixel, colour);
 }
 
-fn position_to_pixel(x: f32, y: f32) -> vec2<u32> {
+fn position_to_pixel(x: f32, y: f32) -> vec2<i32> {
     let col = (x * settings.zoom) + settings.display_width * 0.5;
     let row = (y * settings.zoom) + settings.display_height * 0.5;
-    return vec2<u32>(u32(col), u32(row));
+    return vec2<i32>(i32(col), i32(row));
 }
