@@ -36,6 +36,7 @@ const INDICES: &[u16] = &[
 pub struct Memory {
     // Counts
     pub num_massive_particles: u32,
+    pub num_ghost_particles: u32,
     pub num_indices: u32,
 
     // Uniforms
@@ -45,6 +46,11 @@ pub struct Memory {
     pub massive_positions_and_masses_buffer: wgpu::Buffer,
     pub massive_velocities_and_masses_buffer: wgpu::Buffer,
     pub massive_forces_and_masses_buffer: wgpu::Buffer,
+
+    // Ghosts
+    pub ghost_positions_and_kinds_buffer: wgpu::Buffer,
+    pub ghost_velocities_and_kinds_buffer: wgpu::Buffer,
+    pub ghost_forces_and_kinds_buffer: wgpu::Buffer,
 
     // Textures
     pub display_texture: wgpu::Texture,
@@ -63,15 +69,7 @@ impl<'a> Memory {
 
         let settings_uniform = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("Settings Uniform"),
-            contents: bytemuck::cast_slice(&[
-                settings.display_width,
-                settings.display_height,
-                settings.pixel_size,
-                settings.zoom,
-                settings.gravitational_constant,
-                settings.time_step,
-                settings.smoothing_length,
-            ]),
+            contents: bytemuck::cast_slice(&[settings]),
             usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
         });
 
@@ -108,6 +106,42 @@ impl<'a> Memory {
             device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
                 label: Some("Forces and Masses Buffer"),
                 contents: bytemuck::cast_slice(&init_massive_forces_and_masses_data),
+                usage: wgpu::BufferUsages::STORAGE,
+            });
+
+        // Ghost data
+        let num_ghost_particles = initial_conditions.num_ghost_particles() as u32;
+        let init_ghost_positions_and_kinds_data = initial_conditions
+            .ghost_positions()
+            .iter()
+            .zip(initial_conditions.ghost_kinds().iter())
+            .map(|([px, py, pz], kind)| [*px, *py, *pz, *kind])
+            .flatten()
+            .collect::<Vec<f32>>();
+        let ghost_positions_and_kinds_buffer =
+            device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                label: Some("Positions and Kinds Buffer"),
+                contents: bytemuck::cast_slice(&init_ghost_positions_and_kinds_data),
+                usage: wgpu::BufferUsages::STORAGE,
+            });
+        let init_ghost_velocities_and_kinds_data = initial_conditions
+            .ghost_velocities()
+            .iter()
+            .zip(initial_conditions.ghost_kinds().iter())
+            .map(|([vx, vy, vz], kind)| [*vx, *vy, *vz, *kind])
+            .flatten()
+            .collect::<Vec<f32>>();
+        let ghost_velocities_and_kinds_buffer =
+            device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                label: Some("Velocities and Kinds Buffer"),
+                contents: bytemuck::cast_slice(&init_ghost_velocities_and_kinds_data),
+                usage: wgpu::BufferUsages::STORAGE,
+            });
+        let init_ghost_forces_and_kinds_data = vec![0.0; (num_ghost_particles * 4) as usize];
+        let ghost_forces_and_kinds_buffer =
+            device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                label: Some("Forces and Kinds Buffer"),
+                contents: bytemuck::cast_slice(&init_ghost_forces_and_kinds_data),
                 usage: wgpu::BufferUsages::STORAGE,
             });
 
@@ -157,11 +191,15 @@ impl<'a> Memory {
 
         Self {
             num_massive_particles,
+            num_ghost_particles,
             num_indices,
             settings_uniform,
             massive_positions_and_masses_buffer,
             massive_velocities_and_masses_buffer,
             massive_forces_and_masses_buffer,
+            ghost_positions_and_kinds_buffer,
+            ghost_velocities_and_kinds_buffer,
+            ghost_forces_and_kinds_buffer,
             display_texture,
             display_view,
             display_sampler,

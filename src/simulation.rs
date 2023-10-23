@@ -55,6 +55,14 @@ impl Simulation {
             compute_pass.set_pipeline(&self.pipelines.calculate_massive_forces_pipeline);
             compute_pass.dispatch_workgroups((self.memory.num_massive_particles / 64) as u32, 1, 1);
         }
+        {
+            let mut compute_pass = encoder.begin_compute_pass(&wgpu::ComputePassDescriptor {
+                label: Some("Calculate Ghost Forces"),
+            });
+            compute_pass.set_bind_group(0, &self.pipelines.calculate_ghost_forces_bind_group, &[]);
+            compute_pass.set_pipeline(&self.pipelines.calculate_ghost_forces_pipeline);
+            compute_pass.dispatch_workgroups((self.memory.num_ghost_particles / 64) as u32, 1, 1);
+        }
 
         {
             let mut compute_pass = encoder.begin_compute_pass(&wgpu::ComputePassDescriptor {
@@ -68,6 +76,18 @@ impl Simulation {
             compute_pass.set_pipeline(&self.pipelines.calculate_massive_velocities_pipeline);
             compute_pass.dispatch_workgroups((self.memory.num_massive_particles / 64) as u32, 1, 1);
         }
+        {
+            let mut compute_pass = encoder.begin_compute_pass(&wgpu::ComputePassDescriptor {
+                label: Some("Calculate Ghost Velocities"),
+            });
+            compute_pass.set_bind_group(
+                0,
+                &self.pipelines.calculate_ghost_velocities_bind_group,
+                &[],
+            );
+            compute_pass.set_pipeline(&self.pipelines.calculate_ghost_velocities_pipeline);
+            compute_pass.dispatch_workgroups((self.memory.num_ghost_particles / 64) as u32, 1, 1);
+        }
 
         {
             let mut compute_pass = encoder.begin_compute_pass(&wgpu::ComputePassDescriptor {
@@ -80,6 +100,18 @@ impl Simulation {
             );
             compute_pass.set_pipeline(&self.pipelines.calculate_massive_positions_pipeline);
             compute_pass.dispatch_workgroups((self.memory.num_massive_particles / 64) as u32, 1, 1);
+        }
+        {
+            let mut compute_pass = encoder.begin_compute_pass(&wgpu::ComputePassDescriptor {
+                label: Some("Calculate Ghost Positions"),
+            });
+            compute_pass.set_bind_group(
+                0,
+                &self.pipelines.calculate_ghost_positions_bind_group,
+                &[],
+            );
+            compute_pass.set_pipeline(&self.pipelines.calculate_ghost_positions_pipeline);
+            compute_pass.dispatch_workgroups((self.memory.num_ghost_particles / 64) as u32, 1, 1);
         }
 
         self.hardware
@@ -123,16 +155,36 @@ impl Simulation {
 
         {
             let mut compute_pass = encoder.begin_compute_pass(&wgpu::ComputePassDescriptor {
-                label: Some("Render Massive Particles"),
+                label: Some("Pre-Render Ghost Particles"),
             });
             compute_pass.set_bind_group(
                 0,
-                &self.pipelines.render_massive_particles_bind_group,
+                &self.pipelines.pre_render_ghost_particles_bind_group,
                 &[],
             );
-            compute_pass.set_pipeline(&self.pipelines.render_massive_particles_pipeline);
-            compute_pass.dispatch_workgroups((self.memory.num_massive_particles / 64) as u32, 1, 1);
+            compute_pass.set_pipeline(&self.pipelines.pre_render_ghost_particles_pipeline);
+            compute_pass.dispatch_workgroups((self.memory.num_ghost_particles / 64) as u32, 1, 1);
         }
+        {
+            let mut compute_pass = encoder.begin_compute_pass(&wgpu::ComputePassDescriptor {
+                label: Some("Render Ghost Particles"),
+            });
+            compute_pass.set_bind_group(0, &self.pipelines.render_ghost_particles_bind_group, &[]);
+            compute_pass.set_pipeline(&self.pipelines.render_ghost_particles_pipeline);
+            compute_pass.dispatch_workgroups((self.memory.num_ghost_particles / 64) as u32, 1, 1);
+        }
+        // {
+        //     let mut compute_pass = encoder.begin_compute_pass(&wgpu::ComputePassDescriptor {
+        //         label: Some("Render Massive Particles"),
+        //     });
+        //     compute_pass.set_bind_group(
+        //         0,
+        //         &self.pipelines.render_massive_particles_bind_group,
+        //         &[],
+        //     );
+        //     compute_pass.set_pipeline(&self.pipelines.render_massive_particles_pipeline);
+        //     compute_pass.dispatch_workgroups((self.memory.num_massive_particles / 64) as u32, 1, 1);
+        // }
 
         {
             let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {

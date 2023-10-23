@@ -9,6 +9,8 @@ pub struct Settings {
     pub gravitational_constant: f32,
     pub time_step: f32,
     pub smoothing_length: f32,
+
+    pub ghost_mass: f32,
 }
 
 impl Settings {
@@ -20,5 +22,6 @@ impl Settings {
             && self.gravitational_constant > 0.0
             && self.time_step > 0.0
             && self.smoothing_length > 0.0
+            && self.ghost_mass > 0.0
     }
 }

@@ -11,6 +11,12 @@ pub struct Pipelines {
     pub render_massive_particles_pipeline: wgpu::ComputePipeline,
     pub render_massive_particles_bind_group: wgpu::BindGroup,
 
+    // Render ghost particles
+    pub pre_render_ghost_particles_pipeline: wgpu::ComputePipeline,
+    pub pre_render_ghost_particles_bind_group: wgpu::BindGroup,
+    pub render_ghost_particles_pipeline: wgpu::ComputePipeline,
+    pub render_ghost_particles_bind_group: wgpu::BindGroup,
+
     // Calculate massive forces
     pub calculate_massive_forces_pipeline: wgpu::ComputePipeline,
     pub calculate_massive_forces_bind_group: wgpu::BindGroup,
@@ -22,6 +28,18 @@ pub struct Pipelines {
     // Calculate massive positions
     pub calculate_massive_positions_pipeline: wgpu::ComputePipeline,
     pub calculate_massive_positions_bind_group: wgpu::BindGroup,
+
+    // Calculate ghost forces
+    pub calculate_ghost_forces_pipeline: wgpu::ComputePipeline,
+    pub calculate_ghost_forces_bind_group: wgpu::BindGroup,
+
+    // Calculate ghost velocities
+    pub calculate_ghost_velocities_pipeline: wgpu::ComputePipeline,
+    pub calculate_ghost_velocities_bind_group: wgpu::BindGroup,
+
+    // Calculate ghost positions
+    pub calculate_ghost_positions_pipeline: wgpu::ComputePipeline,
+    pub calculate_ghost_positions_bind_group: wgpu::BindGroup,
 }
 
 impl Pipelines {
@@ -31,27 +49,46 @@ impl Pipelines {
 
         let (render_massive_particles_pipeline, render_massive_particles_bind_group) =
             Self::init_render_massive_particles_pipeline_and_bind_group(hardware, memory);
+        let (pre_render_ghost_particles_pipeline, pre_render_ghost_particles_bind_group) =
+            Self::init_pre_render_ghost_particles_pipeline_and_bind_group(hardware, memory);
+        let (render_ghost_particles_pipeline, render_ghost_particles_bind_group) =
+            Self::init_render_ghost_particles_pipeline_and_bind_group(hardware, memory);
 
         let (calculate_massive_forces_pipeline, calculate_massive_forces_bind_group) =
             Self::init_calculate_massive_forces_pipeline_and_bind_group(hardware, memory);
-
         let (calculate_massive_velocities_pipeline, calculate_massive_velocities_bind_group) =
             Self::init_calculate_massive_velocities_pipeline_and_bind_group(hardware, memory);
-
         let (calculate_massive_positions_pipeline, calculate_massive_positions_bind_group) =
             Self::init_calculate_massive_positions_pipeline_and_bind_group(hardware, memory);
+
+        let (calculate_ghost_forces_pipeline, calculate_ghost_forces_bind_group) =
+            Self::init_calculate_ghost_forces_pipeline_and_bind_group(hardware, memory);
+        let (calculate_ghost_velocities_pipeline, calculate_ghost_velocities_bind_group) =
+            Self::init_calculate_ghost_velocities_pipeline_and_bind_group(hardware, memory);
+        let (calculate_ghost_positions_pipeline, calculate_ghost_positions_bind_group) =
+            Self::init_calculate_ghost_positions_pipeline_and_bind_group(hardware, memory);
 
         Self {
             display_bind_group,
             display_pipeline,
             render_massive_particles_pipeline,
             render_massive_particles_bind_group,
+            pre_render_ghost_particles_pipeline,
+            pre_render_ghost_particles_bind_group,
+            render_ghost_particles_pipeline,
+            render_ghost_particles_bind_group,
             calculate_massive_forces_pipeline,
             calculate_massive_forces_bind_group,
             calculate_massive_velocities_pipeline,
             calculate_massive_velocities_bind_group,
             calculate_massive_positions_pipeline,
             calculate_massive_positions_bind_group,
+            calculate_ghost_forces_pipeline,
+            calculate_ghost_forces_bind_group,
+            calculate_ghost_velocities_pipeline,
+            calculate_ghost_velocities_bind_group,
+            calculate_ghost_positions_pipeline,
+            calculate_ghost_positions_bind_group,
         }
     }
 
@@ -246,6 +283,192 @@ impl Pipelines {
                         resource: memory
                             .massive_positions_and_masses_buffer
                             .as_entire_binding(),
+                    },
+                    wgpu::BindGroupEntry {
+                        binding: 2,
+                        resource: wgpu::BindingResource::TextureView(&memory.display_view),
+                    },
+                ],
+            });
+
+        (pipeline, bind_group)
+    }
+
+    fn init_pre_render_ghost_particles_pipeline_and_bind_group(
+        hardware: &Hardware,
+        memory: &Memory,
+    ) -> (ComputePipeline, BindGroup) {
+        let shader_source = include_str!("shaders/pre_render_ghost_particles.wgsl");
+        let shader_module = hardware
+            .device
+            .create_shader_module(wgpu::ShaderModuleDescriptor {
+                label: Some("Pre-Render Ghost Particles - Shader Module"),
+                source: wgpu::ShaderSource::Wgsl(shader_source.into()),
+            });
+
+        let bind_group_layout =
+            hardware
+                .device
+                .create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+                    label: Some("Pre-Render Ghost Particles - Bind Group Layout"),
+                    entries: &[
+                        wgpu::BindGroupLayoutEntry {
+                            binding: 0,
+                            visibility: wgpu::ShaderStages::COMPUTE,
+                            ty: wgpu::BindingType::Buffer {
+                                ty: wgpu::BufferBindingType::Uniform,
+                                min_binding_size: None,
+                                has_dynamic_offset: false,
+                            },
+                            count: None,
+                        },
+                        wgpu::BindGroupLayoutEntry {
+                            binding: 1,
+                            visibility: wgpu::ShaderStages::COMPUTE,
+                            ty: wgpu::BindingType::Buffer {
+                                ty: wgpu::BufferBindingType::Storage { read_only: false },
+                                min_binding_size: None,
+                                has_dynamic_offset: false,
+                            },
+                            count: None,
+                        },
+                        wgpu::BindGroupLayoutEntry {
+                            binding: 2,
+                            visibility: wgpu::ShaderStages::COMPUTE,
+                            ty: wgpu::BindingType::StorageTexture {
+                                access: wgpu::StorageTextureAccess::ReadWrite,
+                                format: wgpu::TextureFormat::Rgba8Unorm,
+                                view_dimension: wgpu::TextureViewDimension::D2,
+                            },
+                            count: None,
+                        },
+                    ],
+                });
+
+        let pipeline_layout =
+            hardware
+                .device
+                .create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+                    label: Some("Pre-Render Ghost Particles - Pipeline Layout"),
+                    bind_group_layouts: &[&bind_group_layout],
+                    push_constant_ranges: &[],
+                });
+
+        let pipeline = hardware
+            .device
+            .create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
+                label: Some("Pre-Render Ghost Particles - Pipeline"),
+                layout: Some(&pipeline_layout),
+                module: &shader_module,
+                entry_point: "main",
+            });
+
+        let bind_group = hardware
+            .device
+            .create_bind_group(&wgpu::BindGroupDescriptor {
+                label: Some("Pre-Render Ghost Particles - Bind Group"),
+                layout: &pipeline.get_bind_group_layout(0),
+                entries: &[
+                    wgpu::BindGroupEntry {
+                        binding: 0,
+                        resource: memory.settings_uniform.as_entire_binding(),
+                    },
+                    wgpu::BindGroupEntry {
+                        binding: 1,
+                        resource: memory.ghost_positions_and_kinds_buffer.as_entire_binding(),
+                    },
+                    wgpu::BindGroupEntry {
+                        binding: 2,
+                        resource: wgpu::BindingResource::TextureView(&memory.display_view),
+                    },
+                ],
+            });
+
+        (pipeline, bind_group)
+    }
+
+    fn init_render_ghost_particles_pipeline_and_bind_group(
+        hardware: &Hardware,
+        memory: &Memory,
+    ) -> (ComputePipeline, BindGroup) {
+        let shader_source = include_str!("shaders/render_ghost_particles.wgsl");
+        let shader_module = hardware
+            .device
+            .create_shader_module(wgpu::ShaderModuleDescriptor {
+                label: Some("Render Ghost Particles - Shader Module"),
+                source: wgpu::ShaderSource::Wgsl(shader_source.into()),
+            });
+
+        let bind_group_layout =
+            hardware
+                .device
+                .create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+                    label: Some("Render Ghost Particles - Bind Group Layout"),
+                    entries: &[
+                        wgpu::BindGroupLayoutEntry {
+                            binding: 0,
+                            visibility: wgpu::ShaderStages::COMPUTE,
+                            ty: wgpu::BindingType::Buffer {
+                                ty: wgpu::BufferBindingType::Uniform,
+                                min_binding_size: None,
+                                has_dynamic_offset: false,
+                            },
+                            count: None,
+                        },
+                        wgpu::BindGroupLayoutEntry {
+                            binding: 1,
+                            visibility: wgpu::ShaderStages::COMPUTE,
+                            ty: wgpu::BindingType::Buffer {
+                                ty: wgpu::BufferBindingType::Storage { read_only: false },
+                                min_binding_size: None,
+                                has_dynamic_offset: false,
+                            },
+                            count: None,
+                        },
+                        wgpu::BindGroupLayoutEntry {
+                            binding: 2,
+                            visibility: wgpu::ShaderStages::COMPUTE,
+                            ty: wgpu::BindingType::StorageTexture {
+                                access: wgpu::StorageTextureAccess::ReadWrite,
+                                format: wgpu::TextureFormat::Rgba8Unorm,
+                                view_dimension: wgpu::TextureViewDimension::D2,
+                            },
+                            count: None,
+                        },
+                    ],
+                });
+
+        let pipeline_layout =
+            hardware
+                .device
+                .create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+                    label: Some("Render Ghost Particles - Pipeline Layout"),
+                    bind_group_layouts: &[&bind_group_layout],
+                    push_constant_ranges: &[],
+                });
+
+        let pipeline = hardware
+            .device
+            .create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
+                label: Some("Render Ghost Particles - Pipeline"),
+                layout: Some(&pipeline_layout),
+                module: &shader_module,
+                entry_point: "main",
+            });
+
+        let bind_group = hardware
+            .device
+            .create_bind_group(&wgpu::BindGroupDescriptor {
+                label: Some("Render Ghost Particles - Bind Group"),
+                layout: &pipeline.get_bind_group_layout(0),
+                entries: &[
+                    wgpu::BindGroupEntry {
+                        binding: 0,
+                        resource: memory.settings_uniform.as_entire_binding(),
+                    },
+                    wgpu::BindGroupEntry {
+                        binding: 1,
+                        resource: memory.ghost_positions_and_kinds_buffer.as_entire_binding(),
                     },
                     wgpu::BindGroupEntry {
                         binding: 2,
@@ -537,6 +760,301 @@ impl Pipelines {
                         resource: memory
                             .massive_positions_and_masses_buffer
                             .as_entire_binding(),
+                    },
+                ],
+            });
+
+        (pipeline, bind_group)
+    }
+
+    fn init_calculate_ghost_forces_pipeline_and_bind_group(
+        hardware: &Hardware,
+        memory: &Memory,
+    ) -> (ComputePipeline, BindGroup) {
+        let shader_source = include_str!("shaders/calculate_ghost_forces.wgsl");
+        let shader_module = hardware
+            .device
+            .create_shader_module(wgpu::ShaderModuleDescriptor {
+                label: Some("Calculate Ghost Forces - Shader Module"),
+                source: wgpu::ShaderSource::Wgsl(shader_source.into()),
+            });
+
+        let bind_group_layout =
+            hardware
+                .device
+                .create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+                    label: Some("Calculate Ghost Forces - Bind Group Layout"),
+                    entries: &[
+                        wgpu::BindGroupLayoutEntry {
+                            binding: 0,
+                            visibility: wgpu::ShaderStages::COMPUTE,
+                            ty: wgpu::BindingType::Buffer {
+                                ty: wgpu::BufferBindingType::Uniform,
+                                min_binding_size: None,
+                                has_dynamic_offset: false,
+                            },
+                            count: None,
+                        },
+                        wgpu::BindGroupLayoutEntry {
+                            binding: 1,
+                            visibility: wgpu::ShaderStages::COMPUTE,
+                            ty: wgpu::BindingType::Buffer {
+                                ty: wgpu::BufferBindingType::Storage { read_only: true },
+                                min_binding_size: None,
+                                has_dynamic_offset: false,
+                            },
+                            count: None,
+                        },
+                        wgpu::BindGroupLayoutEntry {
+                            binding: 2,
+                            visibility: wgpu::ShaderStages::COMPUTE,
+                            ty: wgpu::BindingType::Buffer {
+                                ty: wgpu::BufferBindingType::Storage { read_only: true },
+                                min_binding_size: None,
+                                has_dynamic_offset: false,
+                            },
+                            count: None,
+                        },
+                        wgpu::BindGroupLayoutEntry {
+                            binding: 3,
+                            visibility: wgpu::ShaderStages::COMPUTE,
+                            ty: wgpu::BindingType::Buffer {
+                                ty: wgpu::BufferBindingType::Storage { read_only: false },
+                                min_binding_size: None,
+                                has_dynamic_offset: false,
+                            },
+                            count: None,
+                        },
+                    ],
+                });
+
+        let pipeline_layout =
+            hardware
+                .device
+                .create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+                    label: Some("Calculate Ghost Forces - Pipeline Layout"),
+                    bind_group_layouts: &[&bind_group_layout],
+                    push_constant_ranges: &[],
+                });
+
+        let pipeline = hardware
+            .device
+            .create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
+                label: Some("Calculate Ghost Forces - Pipeline"),
+                layout: Some(&pipeline_layout),
+                module: &shader_module,
+                entry_point: "main",
+            });
+
+        let bind_group = hardware
+            .device
+            .create_bind_group(&wgpu::BindGroupDescriptor {
+                label: Some("Calculate Ghost Forces - Bind Group"),
+                layout: &pipeline.get_bind_group_layout(0),
+                entries: &[
+                    wgpu::BindGroupEntry {
+                        binding: 0,
+                        resource: memory.settings_uniform.as_entire_binding(),
+                    },
+                    wgpu::BindGroupEntry {
+                        binding: 1,
+                        resource: memory.ghost_positions_and_kinds_buffer.as_entire_binding(),
+                    },
+                    wgpu::BindGroupEntry {
+                        binding: 2,
+                        resource: memory
+                            .massive_positions_and_masses_buffer
+                            .as_entire_binding(),
+                    },
+                    wgpu::BindGroupEntry {
+                        binding: 3,
+                        resource: memory.ghost_forces_and_kinds_buffer.as_entire_binding(),
+                    },
+                ],
+            });
+
+        (pipeline, bind_group)
+    }
+
+    fn init_calculate_ghost_velocities_pipeline_and_bind_group(
+        hardware: &Hardware,
+        memory: &Memory,
+    ) -> (ComputePipeline, BindGroup) {
+        let shader_source = include_str!("shaders/calculate_ghost_velocities.wgsl");
+        let shader_module = hardware
+            .device
+            .create_shader_module(wgpu::ShaderModuleDescriptor {
+                label: Some("Calculate Ghost Velocities - Shader Module"),
+                source: wgpu::ShaderSource::Wgsl(shader_source.into()),
+            });
+
+        let bind_group_layout =
+            hardware
+                .device
+                .create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+                    label: Some("Calculate Ghost Velocities - Bind Group Layout"),
+                    entries: &[
+                        wgpu::BindGroupLayoutEntry {
+                            binding: 0,
+                            visibility: wgpu::ShaderStages::COMPUTE,
+                            ty: wgpu::BindingType::Buffer {
+                                ty: wgpu::BufferBindingType::Uniform,
+                                min_binding_size: None,
+                                has_dynamic_offset: false,
+                            },
+                            count: None,
+                        },
+                        wgpu::BindGroupLayoutEntry {
+                            binding: 1,
+                            visibility: wgpu::ShaderStages::COMPUTE,
+                            ty: wgpu::BindingType::Buffer {
+                                ty: wgpu::BufferBindingType::Storage { read_only: true },
+                                min_binding_size: None,
+                                has_dynamic_offset: false,
+                            },
+                            count: None,
+                        },
+                        wgpu::BindGroupLayoutEntry {
+                            binding: 2,
+                            visibility: wgpu::ShaderStages::COMPUTE,
+                            ty: wgpu::BindingType::Buffer {
+                                ty: wgpu::BufferBindingType::Storage { read_only: false },
+                                min_binding_size: None,
+                                has_dynamic_offset: false,
+                            },
+                            count: None,
+                        },
+                    ],
+                });
+
+        let pipeline_layout =
+            hardware
+                .device
+                .create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+                    label: Some("Calculate Ghost Velocities - Pipeline Layout"),
+                    bind_group_layouts: &[&bind_group_layout],
+                    push_constant_ranges: &[],
+                });
+
+        let pipeline = hardware
+            .device
+            .create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
+                label: Some("Calculate Ghost Velocities - Pipeline"),
+                layout: Some(&pipeline_layout),
+                module: &shader_module,
+                entry_point: "main",
+            });
+
+        let bind_group = hardware
+            .device
+            .create_bind_group(&wgpu::BindGroupDescriptor {
+                label: Some("Calculate Ghost Velocities - Bind Group"),
+                layout: &pipeline.get_bind_group_layout(0),
+                entries: &[
+                    wgpu::BindGroupEntry {
+                        binding: 0,
+                        resource: memory.settings_uniform.as_entire_binding(),
+                    },
+                    wgpu::BindGroupEntry {
+                        binding: 1,
+                        resource: memory.ghost_forces_and_kinds_buffer.as_entire_binding(),
+                    },
+                    wgpu::BindGroupEntry {
+                        binding: 2,
+                        resource: memory.ghost_velocities_and_kinds_buffer.as_entire_binding(),
+                    },
+                ],
+            });
+
+        (pipeline, bind_group)
+    }
+
+    fn init_calculate_ghost_positions_pipeline_and_bind_group(
+        hardware: &Hardware,
+        memory: &Memory,
+    ) -> (ComputePipeline, BindGroup) {
+        let shader_source = include_str!("shaders/calculate_ghost_positions.wgsl");
+        let shader_module = hardware
+            .device
+            .create_shader_module(wgpu::ShaderModuleDescriptor {
+                label: Some("Calculate Ghost Positions - Shader Module"),
+                source: wgpu::ShaderSource::Wgsl(shader_source.into()),
+            });
+
+        let bind_group_layout =
+            hardware
+                .device
+                .create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+                    label: Some("Calculate Ghost Positions - Bind Group Layout"),
+                    entries: &[
+                        wgpu::BindGroupLayoutEntry {
+                            binding: 0,
+                            visibility: wgpu::ShaderStages::COMPUTE,
+                            ty: wgpu::BindingType::Buffer {
+                                ty: wgpu::BufferBindingType::Uniform,
+                                min_binding_size: None,
+                                has_dynamic_offset: false,
+                            },
+                            count: None,
+                        },
+                        wgpu::BindGroupLayoutEntry {
+                            binding: 1,
+                            visibility: wgpu::ShaderStages::COMPUTE,
+                            ty: wgpu::BindingType::Buffer {
+                                ty: wgpu::BufferBindingType::Storage { read_only: true },
+                                min_binding_size: None,
+                                has_dynamic_offset: false,
+                            },
+                            count: None,
+                        },
+                        wgpu::BindGroupLayoutEntry {
+                            binding: 2,
+                            visibility: wgpu::ShaderStages::COMPUTE,
+                            ty: wgpu::BindingType::Buffer {
+                                ty: wgpu::BufferBindingType::Storage { read_only: false },
+                                min_binding_size: None,
+                                has_dynamic_offset: false,
+                            },
+                            count: None,
+                        },
+                    ],
+                });
+
+        let pipeline_layout =
+            hardware
+                .device
+                .create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+                    label: Some("Calculate Ghost Positions - Pipeline Layout"),
+                    bind_group_layouts: &[&bind_group_layout],
+                    push_constant_ranges: &[],
+                });
+
+        let pipeline = hardware
+            .device
+            .create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
+                label: Some("Calculate Ghost Positions - Pipeline"),
+                layout: Some(&pipeline_layout),
+                module: &shader_module,
+                entry_point: "main",
+            });
+
+        let bind_group = hardware
+            .device
+            .create_bind_group(&wgpu::BindGroupDescriptor {
+                label: Some("Calculate Ghost Positions - Bind Group"),
+                layout: &pipeline.get_bind_group_layout(0),
+                entries: &[
+                    wgpu::BindGroupEntry {
+                        binding: 0,
+                        resource: memory.settings_uniform.as_entire_binding(),
+                    },
+                    wgpu::BindGroupEntry {
+                        binding: 1,
+                        resource: memory.ghost_velocities_and_kinds_buffer.as_entire_binding(),
+                    },
+                    wgpu::BindGroupEntry {
+                        binding: 2,
+                        resource: memory.ghost_positions_and_kinds_buffer.as_entire_binding(),
                     },
                 ],
             });

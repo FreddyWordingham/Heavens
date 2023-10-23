@@ -1,6 +1,6 @@
 [package]
 name = "heavens"
-version = "0.4.0"
+version = "0.4.1"
 edition = "2021"
 authors = ["Freddy Wordingham <freddy@digilab.co.uk>"]
 description = "N-body GPU simulations with rendering"

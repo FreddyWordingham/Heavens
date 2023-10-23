@@ -7,6 +7,7 @@ struct Settings {
     gravitational_constant: f32,
     time_step: f32,
     smoothing_length: f32,
+    ghost_mass: f32
 };
 
 @group(0)

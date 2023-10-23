@@ -16,7 +16,7 @@ var<uniform> settings: Settings;
 
 @group(0)
 @binding(1)
-var<storage, read> massive_positions_and_masses: array<vec4<f32>>;
+var<storage, read> ghost_positions_and_kinds: array<vec4<f32>>;
 
 @group(0)
 @binding(2)
@@ -27,13 +27,14 @@ var texture: texture_storage_2d<rgba8unorm, read_write>;
 fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
     let n = global_id.x;
 
-    let position = massive_positions_and_masses[n].xyz;
-    let mass = massive_positions_and_masses[n].w;
+    let position = ghost_positions_and_kinds[n].xyz;
+    let mass = ghost_positions_and_kinds[n].w;
 
     let pixel = position_to_pixel(position.x, position.y);
-    var colour = vec4<f32>(1.0, 1.0, 1.0, 1.0);
+    var colour = textureLoad(texture, pixel);
 
-    textureStore(texture, pixel, colour);
+    let a = 0.01;
+    textureStore(texture, pixel, colour + vec4<f32>(a, a, a, 1.0));
 }
 
 fn position_to_pixel(x: f32, y: f32) -> vec2<i32> {
