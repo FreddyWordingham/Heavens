@@ -19,6 +19,8 @@ fn init_settings() -> Settings {
         display_width: (1024.0),
         display_height: (1024.0),
         pixel_size: 1.0,
+        camera_x: 0.0,
+        camera_y: 0.0,
         zoom: 0.1,
         gravitational_constant: 1.0,
         time_step: 4.0e2,

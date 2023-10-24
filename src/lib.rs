@@ -19,7 +19,7 @@ use winit::{
     window::WindowBuilder,
 };
 
-pub async fn run(settings: Settings, init_conditions: NBody) {
+pub async fn run(mut settings: Settings, init_conditions: NBody) {
     debug_assert!(init_conditions.is_valid());
 
     let event_loop = EventLoop::new();
@@ -58,6 +58,31 @@ pub async fn run(settings: Settings, init_conditions: NBody) {
                             log::info!("Escape pressed, closing");
                             *control_flow = ControlFlow::Exit
                         }
+                        WindowEvent::KeyboardInput {
+                            input:
+                                KeyboardInput {
+                                    state: ElementState::Pressed,
+                                    virtual_keycode: Some(key_code),
+                                    ..
+                                },
+                            ..
+                        } => match key_code {
+                            VirtualKeyCode::Minus => {
+                                settings.time_step /= 10.0;
+                            }
+                            VirtualKeyCode::Equals => {
+                                settings.time_step *= 10.0;
+                            }
+                            VirtualKeyCode::Q => {
+                                settings.zoom /= 2.0;
+                            }
+                            VirtualKeyCode::E => {
+                                settings.zoom *= 2.0;
+                            }
+                            _ => {
+                                println!("Key pressed: {:?}", key_code);
+                            }
+                        },
                         WindowEvent::Resized(physical_size) => {
                             simulation.resize(*physical_size);
                         }
@@ -74,7 +99,7 @@ pub async fn run(settings: Settings, init_conditions: NBody) {
             }
             Event::RedrawRequested(window_id) if window_id == simulation.hardware.window.id() => {
                 log::debug!("Redraw requested");
-                simulation.update();
+                simulation.update(&settings);
                 match simulation.render() {
                     Ok(_) => {
                         log::debug!("Redraw complete");

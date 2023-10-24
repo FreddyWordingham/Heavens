@@ -4,7 +4,10 @@ pub struct Settings {
     pub display_width: f32,
     pub display_height: f32,
     pub pixel_size: f32,
+
     pub zoom: f32,
+    pub camera_x: f32,
+    pub camera_y: f32,
 
     pub gravitational_constant: f32,
     pub time_step: f32,
@@ -28,5 +31,9 @@ impl Settings {
             && self.ghost_mass > 0.0
             && self.ghost_stack_visible_limit >= 1.0
             && self.blur_radius >= 0.0
+    }
+
+    pub fn as_slice(&self) -> &[f32] {
+        unsafe { std::slice::from_raw_parts(self as *const _ as *const f32, 10) }
     }
 }
