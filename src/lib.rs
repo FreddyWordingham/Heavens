@@ -79,8 +79,38 @@ pub async fn run(mut settings: Settings, init_conditions: NBody) {
                             VirtualKeyCode::E => {
                                 settings.zoom *= 2.0;
                             }
+                            VirtualKeyCode::Z => {
+                                settings.blur_radius /= 2.0;
+                            }
+                            VirtualKeyCode::X => {
+                                settings.blur_radius *= 2.0;
+                            }
+                            VirtualKeyCode::F => {
+                                settings.gravitational_constant /= 2.0;
+                            }
+                            VirtualKeyCode::G => {
+                                settings.gravitational_constant *= 2.0;
+                            }
+                            VirtualKeyCode::A => {
+                                settings.camera_x += 10.0;
+                            }
+                            VirtualKeyCode::D => {
+                                settings.camera_x -= 10.0;
+                            }
+                            VirtualKeyCode::W => {
+                                settings.camera_y += 10.0;
+                            }
+                            VirtualKeyCode::S => {
+                                settings.camera_y -= 10.0;
+                            }
+                            VirtualKeyCode::O => {
+                                settings.ghost_stack_visible_limit /= 2.0;
+                            }
+                            VirtualKeyCode::P => {
+                                settings.ghost_stack_visible_limit *= 2.0;
+                            }
                             _ => {
-                                println!("Key pressed: {:?}", key_code);
+                                println!("Unbound key pressed: {:?}", key_code);
                             }
                         },
                         WindowEvent::Resized(physical_size) => {

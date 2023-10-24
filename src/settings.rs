@@ -34,6 +34,6 @@ impl Settings {
     }
 
     pub fn as_slice(&self) -> &[f32] {
-        unsafe { std::slice::from_raw_parts(self as *const _ as *const f32, 10) }
+        unsafe { std::slice::from_raw_parts(self as *const _ as *const f32, 12) }
     }
 }

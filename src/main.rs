@@ -26,7 +26,7 @@ fn init_settings() -> Settings {
         time_step: 4.0e2,
         smoothing_length: 1.0,
         ghost_mass: 1.0,
-        ghost_stack_visible_limit: 10.0,
+        ghost_stack_visible_limit: 8.0,
         blur_radius: 5.0,
     }
 }

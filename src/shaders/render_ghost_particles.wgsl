@@ -50,5 +50,5 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
 fn position_to_pixel(x: f32, y: f32) -> vec2<i32> {
     let col = (x * settings.zoom) + settings.display_width * 0.5;
     let row = (y * settings.zoom) + settings.display_height * 0.5;
-    return vec2<i32>(i32(col), i32(row));
+    return vec2<i32>(i32(col + settings.camera_x), i32(row + settings.camera_y));
 }
