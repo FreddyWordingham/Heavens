@@ -17,6 +17,12 @@ pub struct Pipelines {
     pub render_ghost_particles_pipeline: wgpu::ComputePipeline,
     pub render_ghost_particles_bind_group: wgpu::BindGroup,
 
+    // Blur filters
+    pub blur_horizontally_pipeline: wgpu::ComputePipeline,
+    pub blur_horizontally_bind_group: wgpu::BindGroup,
+    pub blur_vertically_pipeline: wgpu::ComputePipeline,
+    pub blur_vertically_bind_group: wgpu::BindGroup,
+
     // Calculate massive forces
     pub calculate_massive_forces_pipeline: wgpu::ComputePipeline,
     pub calculate_massive_forces_bind_group: wgpu::BindGroup,
@@ -54,6 +60,11 @@ impl Pipelines {
         let (render_ghost_particles_pipeline, render_ghost_particles_bind_group) =
             Self::init_render_ghost_particles_pipeline_and_bind_group(hardware, memory);
 
+        let (blur_horizontally_pipeline, blur_horizontally_bind_group) =
+            Self::blur_horizontally_pipeline_and_bind_group(hardware, memory);
+        let (blur_vertically_pipeline, blur_vertically_bind_group) =
+            Self::blur_vertically_pipeline_and_bind_group(hardware, memory);
+
         let (calculate_massive_forces_pipeline, calculate_massive_forces_bind_group) =
             Self::init_calculate_massive_forces_pipeline_and_bind_group(hardware, memory);
         let (calculate_massive_velocities_pipeline, calculate_massive_velocities_bind_group) =
@@ -77,6 +88,10 @@ impl Pipelines {
             pre_render_ghost_particles_bind_group,
             render_ghost_particles_pipeline,
             render_ghost_particles_bind_group,
+            blur_horizontally_pipeline,
+            blur_horizontally_bind_group,
+            blur_vertically_pipeline,
+            blur_vertically_bind_group,
             calculate_massive_forces_pipeline,
             calculate_massive_forces_bind_group,
             calculate_massive_velocities_pipeline,
@@ -473,6 +488,192 @@ impl Pipelines {
                     wgpu::BindGroupEntry {
                         binding: 2,
                         resource: wgpu::BindingResource::TextureView(&memory.display_view),
+                    },
+                ],
+            });
+
+        (pipeline, bind_group)
+    }
+
+    fn blur_horizontally_pipeline_and_bind_group(
+        hardware: &Hardware,
+        memory: &Memory,
+    ) -> (ComputePipeline, BindGroup) {
+        let shader_source = include_str!("shaders/filter_gaussian_blur_horizontal.wgsl");
+        let shader_module = hardware
+            .device
+            .create_shader_module(wgpu::ShaderModuleDescriptor {
+                label: Some("Filter Gaussian Blur Horizontal - Shader Module"),
+                source: wgpu::ShaderSource::Wgsl(shader_source.into()),
+            });
+
+        let bind_group_layout =
+            hardware
+                .device
+                .create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+                    label: Some("Filter Gaussian Blur Horizontal - Bind Group Layout"),
+                    entries: &[
+                        wgpu::BindGroupLayoutEntry {
+                            binding: 0,
+                            visibility: wgpu::ShaderStages::COMPUTE,
+                            ty: wgpu::BindingType::Buffer {
+                                ty: wgpu::BufferBindingType::Uniform,
+                                min_binding_size: None,
+                                has_dynamic_offset: false,
+                            },
+                            count: None,
+                        },
+                        wgpu::BindGroupLayoutEntry {
+                            binding: 1,
+                            visibility: wgpu::ShaderStages::COMPUTE,
+                            ty: wgpu::BindingType::StorageTexture {
+                                access: wgpu::StorageTextureAccess::ReadOnly,
+                                format: wgpu::TextureFormat::Rgba8Unorm,
+                                view_dimension: wgpu::TextureViewDimension::D2,
+                            },
+                            count: None,
+                        },
+                        wgpu::BindGroupLayoutEntry {
+                            binding: 2,
+                            visibility: wgpu::ShaderStages::COMPUTE,
+                            ty: wgpu::BindingType::StorageTexture {
+                                access: wgpu::StorageTextureAccess::ReadWrite,
+                                format: wgpu::TextureFormat::Rgba8Unorm,
+                                view_dimension: wgpu::TextureViewDimension::D2,
+                            },
+                            count: None,
+                        },
+                    ],
+                });
+
+        let pipeline_layout =
+            hardware
+                .device
+                .create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+                    label: Some("Filter Gaussian Blur Horizontal - Pipeline Layout"),
+                    bind_group_layouts: &[&bind_group_layout],
+                    push_constant_ranges: &[],
+                });
+
+        let pipeline = hardware
+            .device
+            .create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
+                label: Some("Filter Gaussian Blur Horizontal - Pipeline"),
+                layout: Some(&pipeline_layout),
+                module: &shader_module,
+                entry_point: "main",
+            });
+
+        let bind_group = hardware
+            .device
+            .create_bind_group(&wgpu::BindGroupDescriptor {
+                label: Some("Filter Gaussian Blur Horizontal - Bind Group"),
+                layout: &pipeline.get_bind_group_layout(0),
+                entries: &[
+                    wgpu::BindGroupEntry {
+                        binding: 0,
+                        resource: memory.settings_uniform.as_entire_binding(),
+                    },
+                    wgpu::BindGroupEntry {
+                        binding: 1,
+                        resource: wgpu::BindingResource::TextureView(&memory.secondary_view),
+                    },
+                    wgpu::BindGroupEntry {
+                        binding: 2,
+                        resource: wgpu::BindingResource::TextureView(&memory.display_view),
+                    },
+                ],
+            });
+
+        (pipeline, bind_group)
+    }
+
+    fn blur_vertically_pipeline_and_bind_group(
+        hardware: &Hardware,
+        memory: &Memory,
+    ) -> (ComputePipeline, BindGroup) {
+        let shader_source = include_str!("shaders/filter_gaussian_blur_vertical.wgsl");
+        let shader_module = hardware
+            .device
+            .create_shader_module(wgpu::ShaderModuleDescriptor {
+                label: Some("Filter Gaussian Blur Vertical - Shader Module"),
+                source: wgpu::ShaderSource::Wgsl(shader_source.into()),
+            });
+
+        let bind_group_layout =
+            hardware
+                .device
+                .create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+                    label: Some("Filter Gaussian Blur Vertical - Bind Group Layout"),
+                    entries: &[
+                        wgpu::BindGroupLayoutEntry {
+                            binding: 0,
+                            visibility: wgpu::ShaderStages::COMPUTE,
+                            ty: wgpu::BindingType::Buffer {
+                                ty: wgpu::BufferBindingType::Uniform,
+                                min_binding_size: None,
+                                has_dynamic_offset: false,
+                            },
+                            count: None,
+                        },
+                        wgpu::BindGroupLayoutEntry {
+                            binding: 1,
+                            visibility: wgpu::ShaderStages::COMPUTE,
+                            ty: wgpu::BindingType::StorageTexture {
+                                access: wgpu::StorageTextureAccess::ReadOnly,
+                                format: wgpu::TextureFormat::Rgba8Unorm,
+                                view_dimension: wgpu::TextureViewDimension::D2,
+                            },
+                            count: None,
+                        },
+                        wgpu::BindGroupLayoutEntry {
+                            binding: 2,
+                            visibility: wgpu::ShaderStages::COMPUTE,
+                            ty: wgpu::BindingType::StorageTexture {
+                                access: wgpu::StorageTextureAccess::ReadWrite,
+                                format: wgpu::TextureFormat::Rgba8Unorm,
+                                view_dimension: wgpu::TextureViewDimension::D2,
+                            },
+                            count: None,
+                        },
+                    ],
+                });
+
+        let pipeline_layout =
+            hardware
+                .device
+                .create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+                    label: Some("Filter Gaussian Blur Vertical - Pipeline Layout"),
+                    bind_group_layouts: &[&bind_group_layout],
+                    push_constant_ranges: &[],
+                });
+
+        let pipeline = hardware
+            .device
+            .create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
+                label: Some("Filter Gaussian Blur Vertical - Pipeline"),
+                layout: Some(&pipeline_layout),
+                module: &shader_module,
+                entry_point: "main",
+            });
+
+        let bind_group = hardware
+            .device
+            .create_bind_group(&wgpu::BindGroupDescriptor {
+                label: Some("Filter Gaussian Blur Vertical - Bind Group"),
+                layout: &pipeline.get_bind_group_layout(0),
+                entries: &[
+                    wgpu::BindGroupEntry {
+                        binding: 0,
+                        resource: memory.settings_uniform.as_entire_binding(),
+                    },
+                    wgpu::BindGroupEntry {
+                        binding: 1,
+                        resource: wgpu::BindingResource::TextureView(&memory.display_view),
+                    },
+                    wgpu::BindGroupEntry {
+                        binding: 2,
+                        resource: wgpu::BindingResource::TextureView(&memory.secondary_view),
                     },
                 ],
             });

@@ -173,18 +173,54 @@ impl Simulation {
             compute_pass.set_pipeline(&self.pipelines.render_ghost_particles_pipeline);
             compute_pass.dispatch_workgroups((self.memory.num_ghost_particles / 64) as u32, 1, 1);
         }
-        // {
-        //     let mut compute_pass = encoder.begin_compute_pass(&wgpu::ComputePassDescriptor {
-        //         label: Some("Render Massive Particles"),
-        //     });
-        //     compute_pass.set_bind_group(
-        //         0,
-        //         &self.pipelines.render_massive_particles_bind_group,
-        //         &[],
-        //     );
-        //     compute_pass.set_pipeline(&self.pipelines.render_massive_particles_pipeline);
-        //     compute_pass.dispatch_workgroups((self.memory.num_massive_particles / 64) as u32, 1, 1);
-        // }
+        {
+            let mut compute_pass = encoder.begin_compute_pass(&wgpu::ComputePassDescriptor {
+                label: Some("Render Massive Particles"),
+            });
+            compute_pass.set_bind_group(
+                0,
+                &self.pipelines.render_massive_particles_bind_group,
+                &[],
+            );
+            compute_pass.set_pipeline(&self.pipelines.render_massive_particles_pipeline);
+            compute_pass.dispatch_workgroups((self.memory.num_massive_particles / 64) as u32, 1, 1);
+        }
+        {
+            let mut compute_pass = encoder.begin_compute_pass(&wgpu::ComputePassDescriptor {
+                label: Some("Vertical Gaussian Blur"),
+            });
+            compute_pass.set_bind_group(0, &self.pipelines.blur_vertically_bind_group, &[]);
+            compute_pass.set_pipeline(&self.pipelines.blur_vertically_pipeline);
+            compute_pass.dispatch_workgroups((1024 / 8) as u32, (1024 / 8) as u32, 1);
+        }
+        {
+            let mut compute_pass = encoder.begin_compute_pass(&wgpu::ComputePassDescriptor {
+                label: Some("Horizontal Gaussian Blur"),
+            });
+            compute_pass.set_bind_group(0, &self.pipelines.blur_horizontally_bind_group, &[]);
+            compute_pass.set_pipeline(&self.pipelines.blur_horizontally_pipeline);
+            compute_pass.dispatch_workgroups((1024 / 8) as u32, (1024 / 8) as u32, 1);
+        }
+        {
+            let mut compute_pass = encoder.begin_compute_pass(&wgpu::ComputePassDescriptor {
+                label: Some("Render Ghost Particles"),
+            });
+            compute_pass.set_bind_group(0, &self.pipelines.render_ghost_particles_bind_group, &[]);
+            compute_pass.set_pipeline(&self.pipelines.render_ghost_particles_pipeline);
+            compute_pass.dispatch_workgroups((self.memory.num_ghost_particles / 64) as u32, 1, 1);
+        }
+        {
+            let mut compute_pass = encoder.begin_compute_pass(&wgpu::ComputePassDescriptor {
+                label: Some("Render Massive Particles"),
+            });
+            compute_pass.set_bind_group(
+                0,
+                &self.pipelines.render_massive_particles_bind_group,
+                &[],
+            );
+            compute_pass.set_pipeline(&self.pipelines.render_massive_particles_pipeline);
+            compute_pass.dispatch_workgroups((self.memory.num_massive_particles / 64) as u32, 1, 1);
+        }
 
         {
             let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {

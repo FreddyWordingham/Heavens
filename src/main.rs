@@ -16,18 +16,20 @@ async fn start() {
 
 fn init_settings() -> Settings {
     Settings {
-        display_width: 1024.0,
-        display_height: 1024.0,
+        display_width: (1024.0),
+        display_height: (1024.0),
         pixel_size: 1.0,
         zoom: 0.1,
         gravitational_constant: 1.0,
-        time_step: 1.0e2,
+        time_step: 4.0e2,
         smoothing_length: 1.0,
         ghost_mass: 1.0,
+        ghost_stack_visible_limit: 10.0,
+        blur_radius: 5.0,
     }
 }
 
-fn init_conditions(grav_const: f32) -> NBody {
+fn init_conditions(_grav_const: f32) -> NBody {
     let mut rng = rand::thread_rng();
 
     let mut init_conditions = NBody::new();
@@ -49,8 +51,8 @@ fn init_conditions(grav_const: f32) -> NBody {
         1.0e3,           // radius                  [m]
         1.0e0,           // central mass           [kg]
         // 65535 * 64,      // num particles
-        10000 * 64, // num particles
-        1.0,        // kind (used to colour particles)
+        100 * 64 * 64, // num particles
+        1.0,           // kind (used to colour particles)
     );
 
     init_conditions.add_massive_system(
@@ -60,17 +62,13 @@ fn init_conditions(grav_const: f32) -> NBody {
         1000.0,          // radius
         1.0e0,           // central mass
         1.0e-1,          // disc mass
-        64 * 100,        // num particles
+        (64 * 64) - 2,   // num particles
     );
 
-    init_conditions.add_massive_system(
-        &mut rng,
-        [4000.0, -1000.0, 0.0], // centre
-        [-1.0e-1, 0.0, 0.0],    // drift
-        1000.0,                 // radius
-        1.0e-1,                 // central mass
-        1.0e-2,                 // disc mass
-        64 * 10,                // num particles
+    init_conditions.add_massive_particle(
+        [3000.0, -1600.0, 0.0], // centre
+        [-0.15, 0.0, 0.0],      // drift
+        0.7,                    // central mass
     );
 
     init_conditions

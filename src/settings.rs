@@ -11,6 +11,9 @@ pub struct Settings {
     pub smoothing_length: f32,
 
     pub ghost_mass: f32,
+    pub ghost_stack_visible_limit: f32,
+
+    pub blur_radius: f32,
 }
 
 impl Settings {
@@ -23,5 +26,7 @@ impl Settings {
             && self.time_step > 0.0
             && self.smoothing_length > 0.0
             && self.ghost_mass > 0.0
+            && self.ghost_stack_visible_limit >= 1.0
+            && self.blur_radius >= 0.0
     }
 }

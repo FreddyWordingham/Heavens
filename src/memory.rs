@@ -54,7 +54,9 @@ pub struct Memory {
 
     // Textures
     pub display_texture: wgpu::Texture,
+    pub secondary_texture: wgpu::Texture,
     pub display_view: wgpu::TextureView,
+    pub secondary_view: wgpu::TextureView,
     pub display_sampler: wgpu::Sampler,
 
     // Rendering
@@ -164,7 +166,21 @@ impl<'a> Memory {
             label: Some("Display Texture"),
             view_formats: &[],
         });
+        let secondary_texture = device.create_texture(&wgpu::TextureDescriptor {
+            size: texture_size,
+            mip_level_count: 1,
+            sample_count: 1,
+            dimension: wgpu::TextureDimension::D2,
+            format: wgpu::TextureFormat::Rgba8Unorm,
+            usage: wgpu::TextureUsages::TEXTURE_BINDING
+                | wgpu::TextureUsages::COPY_DST
+                | wgpu::TextureUsages::STORAGE_BINDING
+                | wgpu::TextureUsages::RENDER_ATTACHMENT,
+            label: Some("Secondary Texture"),
+            view_formats: &[],
+        });
         let display_view = display_texture.create_view(&wgpu::TextureViewDescriptor::default());
+        let secondary_view = secondary_texture.create_view(&wgpu::TextureViewDescriptor::default());
         let display_sampler = device.create_sampler(&wgpu::SamplerDescriptor {
             address_mode_u: wgpu::AddressMode::ClampToEdge,
             address_mode_v: wgpu::AddressMode::ClampToEdge,
@@ -201,7 +217,9 @@ impl<'a> Memory {
             ghost_velocities_and_kinds_buffer,
             ghost_forces_and_kinds_buffer,
             display_texture,
+            secondary_texture,
             display_view,
+            secondary_view,
             display_sampler,
             vertex_buffer,
             index_buffer,

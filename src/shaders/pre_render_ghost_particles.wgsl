@@ -7,7 +7,11 @@ struct Settings {
     gravitational_constant: f32,
     time_step: f32,
     smoothing_length: f32,
-    ghost_mass: f32
+
+    ghost_mass: f32,
+    ghost_stack_visible_limit: f32,
+
+    blur_radius: f32,
 };
 
 @group(0)
@@ -33,7 +37,7 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
     let pixel = position_to_pixel(position.x, position.y);
     var colour = textureLoad(texture, pixel);
 
-    let a = 0.01;
+    let a = 1.0 / settings.ghost_stack_visible_limit;
     textureStore(texture, pixel, colour + vec4<f32>(a, a, a, 1.0));
 }
 

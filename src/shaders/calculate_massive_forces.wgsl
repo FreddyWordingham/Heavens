@@ -7,7 +7,11 @@ struct Settings {
     gravitational_constant: f32,
     time_step: f32,
     smoothing_length: f32,
-    ghost_mass: f32
+
+    ghost_mass: f32,
+    ghost_stack_visible_limit: f32,
+
+    blur_radius: f32,
 };
 
 @group(0)
