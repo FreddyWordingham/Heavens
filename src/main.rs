@@ -15,7 +15,7 @@ async fn start() {
 }
 
 fn init_settings() -> Settings {
-    let eye_pos = [1.0e3, 0.0, 1.0e3];
+    let eye_pos = [1.0e3, 0.0, 1.0e4];
     let tar_pos = [0.0, 0.0, 0.0];
     let field_of_view = 90.0_f32.to_radians();
 
@@ -23,8 +23,8 @@ fn init_settings() -> Settings {
     let mvp = camera.mvp();
 
     Settings {
-        display_width: (1024.0),
-        display_height: (1024.0),
+        display_width: (750.0),
+        display_height: (750.0),
         pixel_size: 1.0,
         camera_x: 0.0,
         camera_y: 0.0,
@@ -60,6 +60,12 @@ fn init_conditions(grav_const: f32) -> NBody {
 
     let mut init_conditions = NBody::new();
 
+    // init_conditions.add_massive_particle(
+    //     [3000.0, -1600.0, 500.0], // centre
+    //     [-0.15, 0.0, 0.0],        // drift
+    //     0.7,                      // central mass
+    // );
+
     init_conditions.add_massive_system(
         &mut rng,
         grav_const,      // gravitational constant  [m^3 kg^-1 s^-2]
@@ -68,15 +74,8 @@ fn init_conditions(grav_const: f32) -> NBody {
         1.0e3,           // radius                  [m]
         1.0e1,           // centre mass             [kg]
         1.0e-1,          // disc mass               [kg]
-        (64 * 100) - 2,  // num particles
+        (64 * 64) - 1,   // num particles
     );
-
-    init_conditions.add_massive_particle(
-        [3000.0, -1600.0, 500.0], // centre
-        [-0.15, 0.0, 0.0],        // drift
-        0.7,                      // central mass
-    );
-
     init_conditions.add_ghost_field(
         &mut rng,
         [0.0, 0.0, 0.0], // centre                  [m]
@@ -84,30 +83,47 @@ fn init_conditions(grav_const: f32) -> NBody {
         1.0e3,           // radius                  [m]
         1.0e1,           // central mass           [kg]
         655 * 64,        // num particles
-        // 1 * 64, // num particles
-        1.0, // kind (used to colour particles)
+        5.0,             // kind (used to colour particles)
     );
 
     init_conditions.add_massive_system(
         &mut rng,
         grav_const,
-        [-4000.0, 3000.0, 0.0], // centre
-        [0.01, 0.0, 0.0],       // drift
-        1000.0,                 // radius
-        1.0e0,                  // central mass
-        1.0e-1,                 // disc mass
-        (64 * 64) - 1,          // num particles
+        [0.0, 2000.0, 0.0], // centre
+        [0.07, 0.0, 0.0],   // drift
+        1000.0,             // radius
+        1.0e0,              // central mass
+        1.0e-1,             // disc mass
+        (64 * 64) - 1,      // num particles
+    );
+    init_conditions.add_ghost_field(
+        &mut rng,
+        [0.0, 2000.0, 0.0], // centre
+        [0.07, 0.0, 0.0],   // drift
+        1.0e3,              // radius                  [m]
+        1.0e0,              // central mass           [kg]
+        655 * 64,           // num particles
+        3.0,                // kind (used to colour particles)
     );
 
     init_conditions.add_massive_system(
         &mut rng,
         grav_const,
-        [4000.0, -3000.0, 0.0], // centre
-        [-0.01, 0.0, 0.0],      // drift
-        1000.0,                 // radius
-        1.0e0,                  // central mass
-        1.0e-1,                 // disc mass
-        (64 * 64) - 1,          // num particles
+        [-9000.0, 1000.0, 1000.0], // centre
+        [0.1, 0.0, 0.0],           // drift
+        1000.0,                    // radius
+        1.0e0,                     // central mass
+        1.0e-1,                    // disc mass
+        (64 * 64) - 1,             // num particles
+    );
+    init_conditions.add_ghost_field(
+        &mut rng,
+        [-9000.0, 1000.0, 1000.0], // centre
+        [0.1, 0.0, 0.0],           // drift
+        1.0e3,                     // radius                  [m]
+        1.0e0,                     // central mass           [kg]
+        655 * 64,                  // num particles
+        1.0,                       // kind (used to colour particles)
     );
 
     init_conditions

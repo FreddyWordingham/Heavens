@@ -52,16 +52,32 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
     let n = global_id.x;
 
     let position = ghost_positions_and_kinds[n].xyz;
-    let mass = ghost_positions_and_kinds[n].w;
+    let kind = ghost_positions_and_kinds[n].w;
 
     let mvp = mat4x4<f32>(vec4<f32>(settings.mvp_xx, settings.mvp_xy, settings.mvp_xz, settings.mvp_xw), vec4<f32>(settings.mvp_yx, settings.mvp_yy, settings.mvp_yz, settings.mvp_yw), vec4<f32>(settings.mvp_zx, settings.mvp_zy, settings.mvp_zz, settings.mvp_zw), vec4<f32>(settings.mvp_wx, settings.mvp_wy, settings.mvp_wz, settings.mvp_ww));
     let projected_pos = mvp * vec4<f32>(position.x, position.y, position.z, 1.0);
 
     let pixel = position_to_pixel(projected_pos.x, projected_pos.y);
-    var colour = textureLoad(texture, pixel);
+    var prev_colour = textureLoad(texture, pixel);
 
     let a = 1.0 / settings.ghost_stack_visible_limit;
-    textureStore(texture, pixel, colour + vec4<f32>(a, a, a, 1.0));
+
+    var colour = vec3<f32>(1.0, 1.0, 1.0);
+    if kind <= 1.0 {
+        colour = vec3<f32>(1.0, 0.0, 0.0);
+    } else if kind <= 2.0 {
+        colour = vec3<f32>(0.0, 1.0, 0.0);
+    } else if kind <= 3.0 {
+        colour = vec3<f32>(0.0, 0.0, 1.0);
+    } else if kind <= 4.0 {
+        colour = vec3<f32>(0.0, 1.0, 1.0);
+    } else if kind <= 5.0 {
+        colour = vec3<f32>(1.0, 0.0, 1.0);
+    } else if kind <= 6.0 {
+        colour = vec3<f32>(1.0, 1.0, 0.0);
+    }
+
+    textureStore(texture, pixel, prev_colour + vec4<f32>(colour, 1.0));
 }
 
 fn position_to_pixel(x: f32, y: f32) -> vec2<i32> {
