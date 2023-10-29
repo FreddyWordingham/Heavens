@@ -45,7 +45,7 @@ pub async fn run(mut settings: Settings, init_conditions: NBody) {
                 window_id,
                 ref event,
             } if window_id == simulation.hardware.window.id() => {
-                if !simulation.input(event) {
+                if !simulation.input(event, &settings) {
                     match event {
                         WindowEvent::CloseRequested
                         | WindowEvent::KeyboardInput {
@@ -131,7 +131,7 @@ pub async fn run(mut settings: Settings, init_conditions: NBody) {
             }
             Event::RedrawRequested(window_id) if window_id == simulation.hardware.window.id() => {
                 log::debug!("Redraw requested");
-                simulation.update(&settings);
+                simulation.update();
                 match simulation.render() {
                     Ok(_) => {
                         log::debug!("Redraw complete");

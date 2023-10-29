@@ -31,24 +31,24 @@ impl Simulation {
         }
     }
 
-    pub fn input(&mut self, _event: &WindowEvent) -> bool {
-        false
-    }
-
-    pub fn update(&mut self, settings: &Settings) {
-        let mut encoder =
-            self.hardware
-                .device
-                .create_command_encoder(&wgpu::CommandEncoderDescriptor {
-                    label: Some("Compute Encoder"),
-                });
-
+    pub fn input(&mut self, _event: &WindowEvent, settings: &Settings) -> bool {
         // Update settings uniform buffer
         self.hardware.queue.write_buffer(
             &self.memory.settings_uniform,
             0,
             bytemuck::cast_slice(settings.as_slice()),
         );
+
+        false
+    }
+
+    pub fn update(&mut self) {
+        let mut encoder =
+            self.hardware
+                .device
+                .create_command_encoder(&wgpu::CommandEncoderDescriptor {
+                    label: Some("Compute Encoder"),
+                });
 
         {
             let mut compute_pass = encoder.begin_compute_pass(&wgpu::ComputePassDescriptor {

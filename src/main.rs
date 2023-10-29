@@ -15,9 +15,9 @@ async fn start() {
 }
 
 fn init_settings() -> Settings {
-    let eye_pos = [1.0e3, 0.0, 1.0];
+    let eye_pos = [1.0e3, 0.0, 1.0e3];
     let tar_pos = [0.0, 0.0, 0.0];
-    let field_of_view = 45.0_f32.to_radians();
+    let field_of_view = 90.0_f32.to_radians();
 
     let camera = Camera::new(eye_pos, tar_pos, field_of_view);
     let mvp = camera.mvp();
@@ -88,25 +88,27 @@ fn init_conditions(grav_const: f32) -> NBody {
         1.0, // kind (used to colour particles)
     );
 
-    // init_conditions.add_massive_system(
-    //     &mut rng,
-    //     [-4000.0, 3000.0, 0.0], // centre
-    //     [0.01, 0.0, 0.0],       // drift
-    //     1000.0,                 // radius
-    //     1.0e0,                  // central mass
-    //     1.0e-1,                 // disc mass
-    //     (64 * 64) - 1,          // num particles
-    // );
+    init_conditions.add_massive_system(
+        &mut rng,
+        grav_const,
+        [-4000.0, 3000.0, 0.0], // centre
+        [0.01, 0.0, 0.0],       // drift
+        1000.0,                 // radius
+        1.0e0,                  // central mass
+        1.0e-1,                 // disc mass
+        (64 * 64) - 1,          // num particles
+    );
 
-    // init_conditions.add_massive_system(
-    //     &mut rng,
-    //     [4000.0, -3000.0, 0.0], // centre
-    //     [-0.01, 0.0, 0.0],      // drift
-    //     1000.0,                 // radius
-    //     1.0e0,                  // central mass
-    //     1.0e-1,                 // disc mass
-    //     (64 * 64) - 1,          // num particles
-    // );
+    init_conditions.add_massive_system(
+        &mut rng,
+        grav_const,
+        [4000.0, -3000.0, 0.0], // centre
+        [-0.01, 0.0, 0.0],      // drift
+        1000.0,                 // radius
+        1.0e0,                  // central mass
+        1.0e-1,                 // disc mass
+        (64 * 64) - 1,          // num particles
+    );
 
     init_conditions
 }
