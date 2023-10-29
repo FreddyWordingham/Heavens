@@ -1,3 +1,4 @@
+mod camera;
 mod hardware;
 mod memory;
 mod nbody;
@@ -5,6 +6,7 @@ mod pipelines;
 mod settings;
 mod simulation;
 
+pub use camera::Camera;
 pub use nbody::NBody;
 pub use settings::Settings;
 

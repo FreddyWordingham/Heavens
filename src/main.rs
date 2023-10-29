@@ -1,4 +1,4 @@
-use heavens::{run, NBody, Settings};
+use heavens::{run, Camera, NBody, Settings};
 
 fn main() {
     env_logger::init();
@@ -14,59 +14,13 @@ async fn start() {
     run(settings, init_conditions).await;
 }
 
-use nalgebra::{Matrix4, Vector3};
-
-fn look_at(eye: Vector3<f32>, target: Vector3<f32>, up: Vector3<f32>) -> Matrix4<f32> {
-    let forward = (target - eye).normalize();
-    let right = up.cross(&forward).normalize();
-    let actual_up = forward.cross(&right).normalize();
-
-    #[rustfmt::skip]
-    let rotation = Matrix4::new(
-        right.x, actual_up.x, forward.x, 0.0,
-        right.y, actual_up.y, forward.y, 0.0,
-        right.z, actual_up.z, forward.z, 0.0,
-        0.0,     0.0,         0.0,       1.0
-    );
-
-    #[rustfmt::skip]
-    let translation = Matrix4::new(
-        1.0, 0.0, 0.0, -eye.x,
-        0.0, 1.0, 0.0, -eye.y,
-        0.0, 0.0, 1.0, -eye.z,
-        0.0, 0.0, 0.0, 1.0
-    );
-
-    rotation * translation
-}
-
-fn perspective(fov_y: f32, aspect: f32, near: f32, far: f32) -> Matrix4<f32> {
-    let f = 1.0 / (fov_y / 2.0).tan();
-    let nf = 1.0 / (near - far);
-
-    #[rustfmt::skip]
-    let mat = Matrix4::new(
-        f / aspect, 0.0, 0.0,               0.0,
-        0.0,        f,   0.0,               0.0,
-        0.0,        0.0, (far + near) * nf, 2.0 * far * near * nf,
-        0.0,        0.0, -1.0,              0.0
-    );
-
-    mat
-}
-
 fn init_settings() -> Settings {
-    let eye_pos = Vector3::new(1.0e3, 1.0e3, 1.0e3);
-    let tar_pos = Vector3::new(0.0, 0.0, 0.0);
-    let fov_y = 45.0_f32.to_radians();
-    let aspect = 16.0 / 9.0;
-    let near = 0.1;
-    let far = 1.0e9;
+    let eye_pos = [1.0e3, 0.0, 1.0];
+    let tar_pos = [0.0, 0.0, 0.0];
+    let field_of_view = 45.0_f32.to_radians();
 
-    let projection_matrix = perspective(fov_y, aspect, near, far);
-    let view_matrix = look_at(eye_pos, tar_pos, Vector3::new(0.0, 0.0, 1.0));
-
-    let mvp = projection_matrix * view_matrix;
+    let camera = Camera::new(eye_pos, tar_pos, field_of_view);
+    let mvp = camera.mvp();
 
     Settings {
         display_width: (1024.0),
@@ -118,9 +72,9 @@ fn init_conditions(grav_const: f32) -> NBody {
     );
 
     init_conditions.add_massive_particle(
-        [3000.0, -1600.0, 0.0], // centre
-        [-0.15, 0.0, 0.0],      // drift
-        0.7,                    // central mass
+        [3000.0, -1600.0, 500.0], // centre
+        [-0.15, 0.0, 0.0],        // drift
+        0.7,                      // central mass
     );
 
     init_conditions.add_ghost_field(
