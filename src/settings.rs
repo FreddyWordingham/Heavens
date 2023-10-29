@@ -17,6 +17,23 @@ pub struct Settings {
     pub ghost_stack_visible_limit: f32,
 
     pub blur_radius: f32,
+
+    pub mvp_xx: f32,
+    pub mvp_xy: f32,
+    pub mvp_xz: f32,
+    pub mvp_xw: f32,
+    pub mvp_yx: f32,
+    pub mvp_yy: f32,
+    pub mvp_yz: f32,
+    pub mvp_yw: f32,
+    pub mvp_zx: f32,
+    pub mvp_zy: f32,
+    pub mvp_zz: f32,
+    pub mvp_zw: f32,
+    pub mvp_wx: f32,
+    pub mvp_wy: f32,
+    pub mvp_wz: f32,
+    pub mvp_ww: f32,
 }
 
 impl Settings {
@@ -34,6 +51,6 @@ impl Settings {
     }
 
     pub fn as_slice(&self) -> &[f32] {
-        unsafe { std::slice::from_raw_parts(self as *const _ as *const f32, 12) }
+        unsafe { std::slice::from_raw_parts(self as *const _ as *const f32, 12 + 16) }
     }
 }

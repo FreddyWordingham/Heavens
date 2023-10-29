@@ -146,6 +146,7 @@ impl NBody {
     pub fn add_massive_system(
         &mut self,
         rng: &mut impl Rng,
+        _grav_const: f32,
         centre: [f32; 3],
         drift: [f32; 3],
         radius: f32,
