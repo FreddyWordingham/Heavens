@@ -1,5 +1,6 @@
-use nalgebra::{Matrix4, Unit, Vector3};
+use nalgebra::{Matrix4, Rotation3, Unit, Vector3};
 
+#[derive(Copy, Clone, Debug)]
 pub struct Camera {
     eye_position: Vector3<f32>,
     target_position: Vector3<f32>,
@@ -9,16 +10,19 @@ pub struct Camera {
     aspect_ratio: f32, // Width / height
     near_clip: f32,
     far_clip: f32,
+
+    zoom: f32,
 }
 
 impl Camera {
-    pub fn new(eye_position: [f32; 3], target_position: [f32; 3], fov_x: f32) -> Self {
+    pub fn new(eye_position: [f32; 3], target_position: [f32; 3], fov_x: f32, zoom: f32) -> Self {
         debug_assert!(fov_x > 0.0);
+        debug_assert!(zoom > 0.0);
 
         let aspect_ratio = 16.0 / 16.0;
         let fov_y = fov_x * aspect_ratio;
         let near_clip = 0.1;
-        let far_clip = 1.0e9;
+        let far_clip = 1.0e27;
 
         debug_assert!(near_clip < far_clip);
 
@@ -30,11 +34,44 @@ impl Camera {
             aspect_ratio,
             near_clip,
             far_clip,
+            zoom,
         }
     }
 
-    pub fn mvp(&self) -> Matrix4<f32> {
-        self.look_at() * self.perspective()
+    pub fn as_slice(&self) -> Vec<f32> {
+        let mut slice = ((self.look_at() * self.perspective()).transpose().as_slice()).to_vec();
+        slice.push(self.zoom);
+        slice.push(self.zoom);
+        slice.push(self.zoom);
+        slice.push(self.zoom);
+
+        slice
+    }
+
+    pub fn rotate_azimuthal(&mut self, delta: f32) {
+        let forward = (self.target_position - self.eye_position).normalize();
+        let right = self.upward_direction.cross(&forward).normalize();
+        let actual_up: Vector3<f32> = forward.cross(&right);
+        let actual_up_dir = Unit::new_normalize(actual_up);
+
+        let rotation = Rotation3::from_axis_angle(&actual_up_dir, delta);
+
+        let new_forward = rotation * forward;
+        self.target_position = self.eye_position + new_forward;
+    }
+
+    pub fn rotate_polar(&mut self, delta: f32) {
+        let forward = (self.target_position - self.eye_position).normalize();
+        let right = Unit::new_normalize(self.upward_direction.cross(&forward));
+
+        let rotation = Rotation3::from_axis_angle(&right, -delta);
+
+        let new_forward = rotation * forward;
+        self.target_position = self.eye_position + new_forward;
+    }
+
+    pub fn magnify(&mut self, delta: f32) {
+        self.zoom *= delta;
     }
 
     fn look_at(&self) -> Matrix4<f32> {

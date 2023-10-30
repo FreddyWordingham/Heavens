@@ -21,7 +21,7 @@ use winit::{
     window::WindowBuilder,
 };
 
-pub async fn run(mut settings: Settings, init_conditions: NBody) {
+pub async fn run(settings: Settings, camera: Camera, init_conditions: NBody) {
     debug_assert!(init_conditions.is_valid());
 
     let event_loop = EventLoop::new();
@@ -34,7 +34,11 @@ pub async fn run(mut settings: Settings, init_conditions: NBody) {
         .build(&event_loop)
         .unwrap();
 
-    let mut simulation = Simulation::new(window, settings, init_conditions).await;
+    let mut simulation = Simulation::new(window, settings, camera, init_conditions).await;
+    let mut azimuthal_delta = 0.0;
+    let mut polar_delta = 0.0;
+    let mut zoom_delta = 1.0;
+    let mut pause_time = false;
 
     event_loop.run(move |event, _, control_flow| {
         // control_flow.set_poll(); // Continuously runs the event loop
@@ -45,7 +49,7 @@ pub async fn run(mut settings: Settings, init_conditions: NBody) {
                 window_id,
                 ref event,
             } if window_id == simulation.hardware.window.id() => {
-                if !simulation.input(event, &settings) {
+                if !simulation.input(event) {
                     match event {
                         WindowEvent::CloseRequested
                         | WindowEvent::KeyboardInput {
@@ -70,46 +74,53 @@ pub async fn run(mut settings: Settings, init_conditions: NBody) {
                             ..
                         } => match key_code {
                             VirtualKeyCode::Minus => {
-                                settings.time_step /= 10.0;
+                                simulation.settings.time_step /= 2.0;
                             }
                             VirtualKeyCode::Equals => {
-                                settings.time_step *= 10.0;
+                                simulation.settings.time_step *= 2.0;
                             }
                             VirtualKeyCode::Q => {
-                                settings.zoom /= 2.0;
+                                zoom_delta += 1.0e-3;
                             }
                             VirtualKeyCode::E => {
-                                settings.zoom *= 2.0;
+                                zoom_delta -= 1.0e-3;
                             }
                             VirtualKeyCode::Z => {
-                                settings.blur_radius /= 2.0;
+                                simulation.settings.blur_radius /= 2.0;
                             }
                             VirtualKeyCode::X => {
-                                settings.blur_radius *= 2.0;
+                                simulation.settings.blur_radius *= 2.0;
                             }
                             VirtualKeyCode::F => {
-                                settings.gravitational_constant /= 2.0;
+                                simulation.settings.gravitational_constant /= 2.0;
                             }
                             VirtualKeyCode::G => {
-                                settings.gravitational_constant *= 2.0;
+                                simulation.settings.gravitational_constant *= 2.0;
                             }
                             VirtualKeyCode::A => {
-                                settings.camera_x += 10.0;
+                                azimuthal_delta -= 1.0e-3;
                             }
                             VirtualKeyCode::D => {
-                                settings.camera_x -= 10.0;
+                                azimuthal_delta += 1.0e-3;
                             }
                             VirtualKeyCode::W => {
-                                settings.camera_y += 10.0;
+                                polar_delta -= 1.0e-3;
                             }
                             VirtualKeyCode::S => {
-                                settings.camera_y -= 10.0;
+                                polar_delta += 1.0e-3;
                             }
                             VirtualKeyCode::O => {
-                                settings.ghost_stack_visible_limit /= 2.0;
+                                simulation.settings.ghost_stack_visible_limit /= 2.0;
                             }
                             VirtualKeyCode::P => {
-                                settings.ghost_stack_visible_limit *= 2.0;
+                                simulation.settings.ghost_stack_visible_limit *= 2.0;
+                            }
+                            VirtualKeyCode::Space => {
+                                polar_delta = 0.0;
+                                azimuthal_delta = 0.0;
+                                zoom_delta = 1.0;
+                                pause_time = !pause_time;
+                                println!("Time paused: {}", pause_time);
                             }
                             _ => {
                                 println!("Unbound key pressed: {:?}", key_code);
@@ -131,7 +142,14 @@ pub async fn run(mut settings: Settings, init_conditions: NBody) {
             }
             Event::RedrawRequested(window_id) if window_id == simulation.hardware.window.id() => {
                 log::debug!("Redraw requested");
-                simulation.update();
+                if !pause_time {
+                    simulation.update();
+                }
+
+                simulation.camera.rotate_azimuthal(azimuthal_delta);
+                simulation.camera.rotate_polar(polar_delta);
+                simulation.camera.magnify(zoom_delta);
+
                 match simulation.render() {
                     Ok(_) => {
                         log::debug!("Redraw complete");

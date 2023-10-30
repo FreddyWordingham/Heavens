@@ -1,23 +1,32 @@
 use winit::{event::WindowEvent, window::Window};
 
-use crate::{Hardware, Memory, NBody, Pipelines, Settings};
+use crate::{Camera, Hardware, Memory, NBody, Pipelines, Settings};
 
 pub struct Simulation {
     pub hardware: Hardware,
     pub memory: Memory,
     pub pipelines: Pipelines,
+    pub settings: Settings,
+    pub camera: Camera,
 }
 
 impl Simulation {
-    pub async fn new(window: Window, settings: Settings, initial_conditions: NBody) -> Self {
+    pub async fn new(
+        window: Window,
+        settings: Settings,
+        camera: Camera,
+        initial_conditions: NBody,
+    ) -> Self {
         let hardware = Hardware::new(window).await;
-        let memory = Memory::new(settings, initial_conditions, &hardware.device);
+        let memory = Memory::new(&settings, &camera, initial_conditions, &hardware.device);
         let pipelines = Pipelines::new(&hardware, &memory);
 
         Self {
             hardware,
             memory,
             pipelines,
+            settings,
+            camera,
         }
     }
 
@@ -31,12 +40,12 @@ impl Simulation {
         }
     }
 
-    pub fn input(&mut self, _event: &WindowEvent, settings: &Settings) -> bool {
+    pub fn input(&mut self, _event: &WindowEvent) -> bool {
         // Update settings uniform buffer
         self.hardware.queue.write_buffer(
             &self.memory.settings_uniform,
             0,
-            bytemuck::cast_slice(settings.as_slice()),
+            bytemuck::cast_slice(self.settings.as_slice()),
         );
 
         false
@@ -127,6 +136,12 @@ impl Simulation {
     }
 
     pub fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
+        self.hardware.queue.write_buffer(
+            &self.memory.camera_uniform,
+            0,
+            bytemuck::cast_slice(&self.camera.as_slice()),
+        );
+
         let output = self.hardware.surface.get_current_texture()?;
 
         let screen_view = output
@@ -172,14 +187,14 @@ impl Simulation {
             compute_pass.set_pipeline(&self.pipelines.pre_render_ghost_particles_pipeline);
             compute_pass.dispatch_workgroups((self.memory.num_ghost_particles / 64) as u32, 1, 1);
         }
-        {
-            let mut compute_pass = encoder.begin_compute_pass(&wgpu::ComputePassDescriptor {
-                label: Some("Render Ghost Particles"),
-            });
-            compute_pass.set_bind_group(0, &self.pipelines.render_ghost_particles_bind_group, &[]);
-            compute_pass.set_pipeline(&self.pipelines.render_ghost_particles_pipeline);
-            compute_pass.dispatch_workgroups((self.memory.num_ghost_particles / 64) as u32, 1, 1);
-        }
+        // {
+        //     let mut compute_pass = encoder.begin_compute_pass(&wgpu::ComputePassDescriptor {
+        //         label: Some("Render Ghost Particles"),
+        //     });
+        //     compute_pass.set_bind_group(0, &self.pipelines.render_ghost_particles_bind_group, &[]);
+        //     compute_pass.set_pipeline(&self.pipelines.render_ghost_particles_pipeline);
+        //     compute_pass.dispatch_workgroups((self.memory.num_ghost_particles / 64) as u32, 1, 1);
+        // }
         {
             let mut compute_pass = encoder.begin_compute_pass(&wgpu::ComputePassDescriptor {
                 label: Some("Render Massive Particles"),
@@ -198,7 +213,7 @@ impl Simulation {
             });
             compute_pass.set_bind_group(0, &self.pipelines.blur_vertically_bind_group, &[]);
             compute_pass.set_pipeline(&self.pipelines.blur_vertically_pipeline);
-            compute_pass.dispatch_workgroups((1024 / 8) as u32, (1024 / 8) as u32, 1);
+            compute_pass.dispatch_workgroups((1300 / 8) as u32, (1300 / 8) as u32, 1);
         }
         {
             let mut compute_pass = encoder.begin_compute_pass(&wgpu::ComputePassDescriptor {
@@ -206,7 +221,7 @@ impl Simulation {
             });
             compute_pass.set_bind_group(0, &self.pipelines.blur_horizontally_bind_group, &[]);
             compute_pass.set_pipeline(&self.pipelines.blur_horizontally_pipeline);
-            compute_pass.dispatch_workgroups((1024 / 8) as u32, (1024 / 8) as u32, 1);
+            compute_pass.dispatch_workgroups((1300 / 8) as u32, (1300 / 8) as u32, 1);
         }
         {
             let mut compute_pass = encoder.begin_compute_pass(&wgpu::ComputePassDescriptor {

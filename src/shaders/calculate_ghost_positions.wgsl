@@ -3,10 +3,6 @@ struct Settings {
     display_height: f32,
     pixel_size: f32,
 
-    zoom: f32,
-    camera_x: f32,
-    camera_y: f32,
-
     gravitational_constant: f32,
     time_step: f32,
     smoothing_length: f32,

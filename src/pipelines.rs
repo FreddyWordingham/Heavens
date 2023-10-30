@@ -246,7 +246,7 @@ impl Pipelines {
                             binding: 1,
                             visibility: wgpu::ShaderStages::COMPUTE,
                             ty: wgpu::BindingType::Buffer {
-                                ty: wgpu::BufferBindingType::Storage { read_only: false },
+                                ty: wgpu::BufferBindingType::Uniform,
                                 min_binding_size: None,
                                 has_dynamic_offset: false,
                             },
@@ -254,6 +254,16 @@ impl Pipelines {
                         },
                         wgpu::BindGroupLayoutEntry {
                             binding: 2,
+                            visibility: wgpu::ShaderStages::COMPUTE,
+                            ty: wgpu::BindingType::Buffer {
+                                ty: wgpu::BufferBindingType::Storage { read_only: false },
+                                min_binding_size: None,
+                                has_dynamic_offset: false,
+                            },
+                            count: None,
+                        },
+                        wgpu::BindGroupLayoutEntry {
+                            binding: 3,
                             visibility: wgpu::ShaderStages::COMPUTE,
                             ty: wgpu::BindingType::StorageTexture {
                                 access: wgpu::StorageTextureAccess::ReadWrite,
@@ -295,12 +305,16 @@ impl Pipelines {
                     },
                     wgpu::BindGroupEntry {
                         binding: 1,
+                        resource: memory.camera_uniform.as_entire_binding(),
+                    },
+                    wgpu::BindGroupEntry {
+                        binding: 2,
                         resource: memory
                             .massive_positions_and_masses_buffer
                             .as_entire_binding(),
                     },
                     wgpu::BindGroupEntry {
-                        binding: 2,
+                        binding: 3,
                         resource: wgpu::BindingResource::TextureView(&memory.display_view),
                     },
                 ],
@@ -341,7 +355,7 @@ impl Pipelines {
                             binding: 1,
                             visibility: wgpu::ShaderStages::COMPUTE,
                             ty: wgpu::BindingType::Buffer {
-                                ty: wgpu::BufferBindingType::Storage { read_only: false },
+                                ty: wgpu::BufferBindingType::Uniform,
                                 min_binding_size: None,
                                 has_dynamic_offset: false,
                             },
@@ -349,6 +363,16 @@ impl Pipelines {
                         },
                         wgpu::BindGroupLayoutEntry {
                             binding: 2,
+                            visibility: wgpu::ShaderStages::COMPUTE,
+                            ty: wgpu::BindingType::Buffer {
+                                ty: wgpu::BufferBindingType::Storage { read_only: false },
+                                min_binding_size: None,
+                                has_dynamic_offset: false,
+                            },
+                            count: None,
+                        },
+                        wgpu::BindGroupLayoutEntry {
+                            binding: 3,
                             visibility: wgpu::ShaderStages::COMPUTE,
                             ty: wgpu::BindingType::StorageTexture {
                                 access: wgpu::StorageTextureAccess::ReadWrite,
@@ -390,10 +414,14 @@ impl Pipelines {
                     },
                     wgpu::BindGroupEntry {
                         binding: 1,
-                        resource: memory.ghost_positions_and_kinds_buffer.as_entire_binding(),
+                        resource: memory.camera_uniform.as_entire_binding(),
                     },
                     wgpu::BindGroupEntry {
                         binding: 2,
+                        resource: memory.ghost_positions_and_kinds_buffer.as_entire_binding(),
+                    },
+                    wgpu::BindGroupEntry {
+                        binding: 3,
                         resource: wgpu::BindingResource::TextureView(&memory.display_view),
                     },
                 ],
@@ -434,7 +462,7 @@ impl Pipelines {
                             binding: 1,
                             visibility: wgpu::ShaderStages::COMPUTE,
                             ty: wgpu::BindingType::Buffer {
-                                ty: wgpu::BufferBindingType::Storage { read_only: false },
+                                ty: wgpu::BufferBindingType::Uniform,
                                 min_binding_size: None,
                                 has_dynamic_offset: false,
                             },
@@ -442,6 +470,16 @@ impl Pipelines {
                         },
                         wgpu::BindGroupLayoutEntry {
                             binding: 2,
+                            visibility: wgpu::ShaderStages::COMPUTE,
+                            ty: wgpu::BindingType::Buffer {
+                                ty: wgpu::BufferBindingType::Storage { read_only: false },
+                                min_binding_size: None,
+                                has_dynamic_offset: false,
+                            },
+                            count: None,
+                        },
+                        wgpu::BindGroupLayoutEntry {
+                            binding: 3,
                             visibility: wgpu::ShaderStages::COMPUTE,
                             ty: wgpu::BindingType::StorageTexture {
                                 access: wgpu::StorageTextureAccess::ReadWrite,
@@ -483,10 +521,14 @@ impl Pipelines {
                     },
                     wgpu::BindGroupEntry {
                         binding: 1,
-                        resource: memory.ghost_positions_and_kinds_buffer.as_entire_binding(),
+                        resource: memory.camera_uniform.as_entire_binding(),
                     },
                     wgpu::BindGroupEntry {
                         binding: 2,
+                        resource: memory.ghost_positions_and_kinds_buffer.as_entire_binding(),
+                    },
+                    wgpu::BindGroupEntry {
+                        binding: 3,
                         resource: wgpu::BindingResource::TextureView(&memory.display_view),
                     },
                 ],

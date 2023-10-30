@@ -1,6 +1,6 @@
 use wgpu::util::DeviceExt;
 
-use crate::{NBody, Settings};
+use crate::{Camera, NBody, Settings};
 
 #[repr(C)]
 #[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
@@ -41,6 +41,7 @@ pub struct Memory {
 
     // Uniforms
     pub settings_uniform: wgpu::Buffer,
+    pub camera_uniform: wgpu::Buffer,
 
     // Particles
     pub massive_positions_and_masses_buffer: wgpu::Buffer,
@@ -65,13 +66,23 @@ pub struct Memory {
 }
 
 impl<'a> Memory {
-    pub fn new(settings: Settings, initial_conditions: NBody, device: &wgpu::Device) -> Self {
+    pub fn new(
+        settings: &Settings,
+        camera: &Camera,
+        initial_conditions: NBody,
+        device: &wgpu::Device,
+    ) -> Self {
         debug_assert!(settings.is_valid());
         debug_assert!(initial_conditions.is_valid());
 
         let settings_uniform = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("Settings Uniform"),
-            contents: bytemuck::cast_slice(&[settings]),
+            contents: bytemuck::cast_slice(settings.as_slice()),
+            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+        });
+        let camera_uniform = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+            label: Some("Camera Uniform"),
+            contents: bytemuck::cast_slice(&camera.as_slice()),
             usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
         });
 
@@ -210,6 +221,7 @@ impl<'a> Memory {
             num_ghost_particles,
             num_indices,
             settings_uniform,
+            camera_uniform,
             massive_positions_and_masses_buffer,
             massive_velocities_and_masses_buffer,
             massive_forces_and_masses_buffer,
