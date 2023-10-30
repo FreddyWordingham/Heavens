@@ -64,7 +64,45 @@ fn init_conditions(grav_const: f32) -> NBody {
         5.0,             // kind (used to colour particles)
     );
 
-    // More bodies here...
+    init_conditions.add_massive_system(
+        &mut rng,
+        grav_const,
+        [0.0, 2000.0, 400.0], // centre
+        [0.07, 0.0, 0.0],     // drift
+        1000.0,               // radius
+        1.0e0,                // central mass
+        1.0e-1,               // disc mass
+        (64 * 64) - 1,        // num particles
+    );
+    init_conditions.add_ghost_field(
+        &mut rng,
+        [0.0, 2000.0, 400.0], // centre
+        [0.07, 0.0, 0.0],     // drift
+        1.0e3,                // radius                  [m]
+        1.0e0,                // central mass           [kg]
+        655 * 64,             // num particles
+        3.0,                  // kind (used to colour particles)
+    );
+
+    init_conditions.add_massive_system(
+        &mut rng,
+        grav_const,
+        [-9000.0, 1000.0, 1000.0], // centre
+        [0.1, 0.0, 0.0],           // drift
+        1000.0,                    // radius
+        1.0e0,                     // central mass
+        1.0e-1,                    // disc mass
+        (64 * 64) - 1,             // num particles
+    );
+    init_conditions.add_ghost_field(
+        &mut rng,
+        [-9000.0, 1000.0, 1000.0], // centre
+        [0.1, 0.0, 0.0],           // drift
+        1.0e3,                     // radius                  [m]
+        1.0e0,                     // central mass           [kg]
+        655 * 64,                  // num particles
+        1.0,                       // kind (used to colour particles)
+    );
 
     init_conditions
 }

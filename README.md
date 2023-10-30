@@ -35,6 +35,26 @@ cargo run --release
   <img src="./resources/screenshot.png">
 </p>
 
+## 🎮 Controls
+
+| Letter  | Description                         |
+| ------- | ----------------------------------- |
+| `-`     | Halve timestep                      |
+| `=`     | Double timestep                     |
+| `Q`     | Decrease Zoom                       |
+| `E`     | Increase zoom                       |
+| `Z`     | Halve the blur radius               |
+| `X`     | Double the blur radius              |
+| `F`     | Decrease strength of gravity        |
+| `G`     | Increase strength of gravity        |
+| `A`     | Spin camera anticlockwise           |
+| `D`     | Spin camera clockwise               |
+| `W`     | Turn simulation towards camera      |
+| `S`     | Turn simulation away from camera    |
+| `O`     | Halve ghost stack visibility limit  |
+| `P`     | Double ghost stack visibility limit |
+| `Space` | Pause / Unpause Time                |
+
 ## 📝 Usage
 
 I will create a runtime TOML configuration scheme in the future.
