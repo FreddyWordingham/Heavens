@@ -191,6 +191,50 @@ impl NBody {
         }
     }
 
+    pub fn add_massive_system2(
+        &mut self,
+        rng: &mut impl Rng,
+        _grav_const: f32,
+        centre: [f32; 3],
+        drift: [f32; 3],
+        radius: f32,
+        disc_mass: f32,
+        num_particles: usize,
+    ) {
+        debug_assert!(radius > 0.0);
+        debug_assert!(num_particles > 0);
+
+        self.massive_positions.reserve_exact(num_particles);
+        self.massive_velocities.reserve_exact(num_particles);
+        self.massive_masses.reserve_exact(num_particles);
+
+        for _ in 0..num_particles {
+            let mut dx = rng.gen_range(-radius..radius);
+            let mut dy = rng.gen_range(-radius..radius);
+
+            while dx * dx + dy * dy > radius * radius {
+                dx = rng.gen_range(-radius..radius);
+                dy = rng.gen_range(-radius..radius);
+            }
+
+            let r = (dx * dx + dy * dy).sqrt();
+            let theta = dy.atan2(dx);
+
+            let f = r / radius;
+            let angular_velocity = ((disc_mass * f * f) / r).sqrt() * 1.41;
+
+            let vx = angular_velocity * theta.sin();
+            let vy = angular_velocity * -theta.cos();
+
+            let position = [centre[0] + dx, centre[1] + dy, centre[2]];
+            let velocity = [vx + drift[0], vy + drift[1], drift[2]];
+
+            self.massive_positions.push(position);
+            self.massive_velocities.push(velocity);
+            self.massive_masses.push(disc_mass / num_particles as f32);
+        }
+    }
+
     pub fn add_ghost_field(
         &mut self,
         rng: &mut impl Rng,
@@ -216,7 +260,8 @@ impl NBody {
             let dy = r * theta.sin();
             let position = [centre[0] + dx, centre[1] + dy, centre[2]];
 
-            let angular_velocity = (centre_mass / r).sqrt();
+            let f = r / radius;
+            let angular_velocity = ((centre_mass * f) / r).sqrt();
             let vx = angular_velocity * theta.sin();
             let vy = angular_velocity * -theta.cos();
 
