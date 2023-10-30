@@ -89,10 +89,10 @@ fn init_settings() -> Settings {
 
 ```rust
 fn init_camera() -> Camera {
-    let eye_pos = [1.0e3, 0.0, 1.0e3]; // [m]
-    let tar_pos = [0.0, 0.0, 0.0]; // [m]
-    let field_of_view = 90.0_f32.to_radians(); // [radians]
-    let zoom = 1000.0; // [m]
+    let eye_pos = [1.0e3, 0.0, 1.0e3];          // [m]
+    let tar_pos = [0.0, 0.0, 0.0];              // [m]
+    let field_of_view = 90.0_f32.to_radians();  // [radians]
+    let zoom = 1000.0;                          // [m]
 
     Camera::new(eye_pos, tar_pos, field_of_view, zoom)
 }
